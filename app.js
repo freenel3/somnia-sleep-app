@@ -1,0 +1,645 @@
+/**
+ * SOMNIA 2026 - Main Application Controller
+ * Connects Audio Engine, Sleep Twin, Breathwork, and Tracker into a seamless UI.
+ */
+
+document.addEventListener('DOMContentLoaded', () => {
+  initAmbientCanvas();
+  initTabs();
+  initAutopilot();
+  initSleepTwin();
+  initBreathworkUI();
+  initCyclesAndNaps();
+  initTrackerUI();
+  initMelatoninShield();
+  startClock();
+  initArgonModules();
+});
+
+// =====================================================================
+// 1. ATMOSPHERIC CANVAS (Subtle Deep Space Drifting Stars)
+// =====================================================================
+function initAmbientCanvas() {
+  const canvas = document.getElementById('ambient-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  let width = (canvas.width = window.innerWidth);
+  let height = (canvas.height = window.innerHeight);
+
+  window.addEventListener('resize', () => {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+  });
+
+  const stars = Array.from({ length: 70 }, () => ({
+    x: Math.random() * width,
+    y: Math.random() * height,
+    radius: Math.random() * 1.5 + 0.3,
+    alpha: Math.random(),
+    speed: Math.random() * 0.005 + 0.002,
+  }));
+
+  function animate() {
+    ctx.clearRect(0, 0, width, height);
+    for (let star of stars) {
+      star.alpha += star.speed;
+      if (star.alpha > 1 || star.alpha < 0) star.speed = -star.speed;
+      ctx.beginPath();
+      ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(168, 85, 247, ${Math.abs(star.alpha) * 0.5})`;
+      ctx.fill();
+    }
+    requestAnimationFrame(animate);
+  }
+  animate();
+}
+
+// =====================================================================
+// 2. TAB NAVIGATION
+// =====================================================================
+function initTabs() {
+  const tabButtons = document.querySelectorAll('.nav-tab-btn');
+  const tabContents = document.querySelectorAll('.tab-content');
+
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.getAttribute('data-tab');
+
+      tabButtons.forEach(b => b.classList.remove('active'));
+      tabContents.forEach(c => c.classList.remove('active'));
+
+      btn.classList.add('active');
+      const targetContent = document.getElementById(targetId);
+      if (targetContent) {
+        targetContent.classList.add('active');
+        // Render chart if opening tracker
+        if (targetId === 'tab-tracker') {
+          window.sleepTracker.renderSvgChart('sleep-chart-box');
+        }
+      }
+    });
+  });
+}
+
+// =====================================================================
+// 3. NIGHT AUTOPILOT (1-Click Cocoon Mode)
+// =====================================================================
+function initAutopilot() {
+  const btnAutopilot = document.getElementById('btn-autopilot');
+  const brownSlider = document.getElementById('slider-brown');
+  const rainSlider = document.getElementById('slider-rain');
+  const deltaSlider = document.getElementById('slider-delta');
+  const timerSelect = document.getElementById('select-timer');
+
+  let isAutopilotOn = false;
+
+  btnAutopilot.addEventListener('click', () => {
+    if (!isAutopilotOn) {
+      // Start Autopilot: Brown Noise (45%) + Rain (30%) + Delta 2Hz (25%)
+      window.somniaAudio.startBrownNoise(parseFloat(brownSlider.value));
+      window.somniaAudio.startRain(parseFloat(rainSlider.value));
+      window.somniaAudio.startBinaural(216, 2.0, parseFloat(deltaSlider.value));
+
+      const timerMins = parseInt(timerSelect.value, 10);
+      if (timerMins > 0) {
+        window.somniaAudio.setSleepTimer(timerMins, () => {
+          isAutopilotOn = false;
+          updateButtonState();
+        });
+      }
+
+      isAutopilotOn = true;
+    } else {
+      window.somniaAudio.stopAll();
+      isAutopilotOn = false;
+    }
+    updateButtonState();
+  });
+
+  function updateButtonState() {
+    if (isAutopilotOn) {
+      btnAutopilot.classList.add('playing');
+      btnAutopilot.innerHTML = '<span>⏸️</span> Остановить Автопилот';
+    } else {
+      btnAutopilot.classList.remove('playing');
+      btnAutopilot.innerHTML = '<span>🚀</span> Запустить Автопилот Сна';
+    }
+  }
+
+  // Volume sliders
+  brownSlider.addEventListener('input', (e) => {
+    window.somniaAudio.setBrownVolume(parseFloat(e.target.value));
+  });
+  rainSlider.addEventListener('input', (e) => {
+    window.somniaAudio.setRainVolume(parseFloat(e.target.value));
+  });
+  deltaSlider.addEventListener('input', (e) => {
+    window.somniaAudio.setBinauralVolume(parseFloat(e.target.value));
+  });
+
+  // Track toggles
+  document.querySelectorAll('.track-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const track = btn.getAttribute('data-track');
+      const isMuted = btn.classList.toggle('muted');
+      if (track === 'brown') {
+        if (isMuted) window.somniaAudio.stopBrownNoise();
+        else window.somniaAudio.startBrownNoise(parseFloat(brownSlider.value));
+      } else if (track === 'rain') {
+        if (isMuted) window.somniaAudio.stopRain();
+        else window.somniaAudio.startRain(parseFloat(rainSlider.value));
+      } else if (track === 'delta') {
+        if (isMuted) window.somniaAudio.stopBinaural();
+        else window.somniaAudio.startBinaural(216, 2.0, parseFloat(deltaSlider.value));
+      }
+    });
+  });
+}
+
+// =====================================================================
+// 4. SLEEP TWIN PREDICTOR
+// =====================================================================
+function initSleepTwin() {
+  const inputs = {
+    caffeineMg: document.getElementById('twin-caffeine-mg'),
+    caffeineHoursAgo: document.getElementById('twin-caffeine-hours'),
+    screenMinutesBeforeBed: document.getElementById('twin-screen-mins'),
+    roomTempCelsius: document.getElementById('twin-room-temp'),
+    alcoholDrinks: document.getElementById('twin-alcohol-drinks'),
+  };
+
+  const scoreVal = document.getElementById('twin-score-num');
+  const scoreLabel = document.getElementById('twin-score-label');
+  const insightsList = document.getElementById('twin-insights-list');
+  const gaugeBox = document.getElementById('twin-gauge');
+
+  function recalculate() {
+    const data = {
+      caffeineMg: parseFloat(inputs.caffeineMg.value) || 0,
+      caffeineHoursAgo: parseFloat(inputs.caffeineHoursAgo.value) || 0,
+      screenMinutesBeforeBed: parseFloat(inputs.screenMinutesBeforeBed.value) || 0,
+      roomTempCelsius: parseFloat(inputs.roomTempCelsius.value) || 19,
+      alcoholDrinks: parseFloat(inputs.alcoholDrinks.value) || 0,
+    };
+
+    const res = window.sleepEngine.predictSleepScore(data);
+
+    scoreVal.textContent = res.score;
+    scoreLabel.textContent = res.qualityLabel;
+    gaugeBox.style.setProperty('--pct', `${res.score * 3.6}deg`);
+
+    insightsList.innerHTML = res.insights
+      .map(i => `<li style="font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; line-height: 1.4;">${i}</li>`)
+      .join('');
+  }
+
+  Object.values(inputs).forEach(input => {
+    if (input) input.addEventListener('input', recalculate);
+  });
+
+  recalculate();
+}
+
+// =====================================================================
+// 5. BREATHWORK CONTROLLER
+// =====================================================================
+function initBreathworkUI() {
+  const ring = document.getElementById('breath-ring');
+  const phaseText = document.getElementById('breath-phase');
+  const timerText = document.getElementById('breath-timer');
+  const instructText = document.getElementById('breath-instruction');
+  const btnToggle = document.getElementById('btn-breath-toggle');
+  const cycleCountBadge = document.getElementById('breath-cycle-badge');
+
+  // Protocol switches
+  document.querySelectorAll('.btn-protocol').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.btn-protocol').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const proto = btn.getAttribute('data-proto');
+      window.breathworkEngine.setProtocol(proto);
+      instructText.textContent = window.breathworkEngine.protocols[proto].description;
+      resetDisplay();
+    });
+  });
+
+  btnToggle.addEventListener('click', () => {
+    if (window.breathworkEngine.isActive) {
+      window.breathworkEngine.stop();
+      btnToggle.textContent = '▶️ Начать практику';
+      resetDisplay();
+    } else {
+      btnToggle.textContent = '⏹️ Завершить практику';
+      window.breathworkEngine.start(
+        (remTime, progress, cycle) => {
+          timerText.textContent = Math.ceil(remTime) + 'с';
+          cycleCountBadge.textContent = `Цикл: ${cycle}`;
+
+          const action = window.breathworkEngine.currentStep.action;
+          let scale = 1.0;
+          if (action.includes('inhale')) {
+            scale = 1.0 + progress * 0.7; // Expands to 1.7x
+          } else if (action === 'hold') {
+            scale = 1.7; // Stays expanded
+          } else if (action === 'exhale') {
+            scale = 1.7 - progress * 0.7; // Contracts back to 1.0x
+          }
+          ring.style.transform = `scale(${scale})`;
+        },
+        (step, cycle) => {
+          phaseText.textContent = step.phase;
+          instructText.textContent = step.text;
+          cycleCountBadge.textContent = `Цикл: ${cycle}`;
+        }
+      );
+    }
+  });
+
+  function resetDisplay() {
+    ring.style.transform = 'scale(1.0)';
+    phaseText.textContent = 'Готовность';
+    timerText.textContent = '0с';
+  }
+}
+
+// =====================================================================
+// 6. CYCLES & NASA NAP STATION
+// =====================================================================
+function initCyclesAndNaps() {
+  const wakeTimeInput = document.getElementById('calc-wake-time');
+  const bedtimesContainer = document.getElementById('bedtimes-results');
+  const napsContainer = document.getElementById('naps-grid');
+
+  function updateBedtimes() {
+    const val = wakeTimeInput.value || '07:30';
+    const bedtimes = window.sleepEngine.calculateBedtimes(val);
+
+    bedtimesContainer.innerHTML = bedtimes
+      .map(b => `
+        <div class="cycle-card ${b.isRecommended ? 'highlight' : ''}">
+          <div style="font-size: 11px; font-weight: 700; color: ${b.isRecommended ? 'var(--accent-cyan)' : 'var(--text-muted)'}; text-transform: uppercase;">${b.label}</div>
+          <div class="cycle-time">${b.bedtime}</div>
+          <div class="cycle-duration">${b.cycles} циклов (${b.totalHours} ч)</div>
+        </div>
+      `)
+      .join('');
+  }
+
+  if (wakeTimeInput) {
+    wakeTimeInput.addEventListener('change', updateBedtimes);
+    updateBedtimes();
+  }
+
+  // Populate NASA Naps
+  if (napsContainer) {
+    const protocols = window.sleepEngine.getNapProtocols();
+    napsContainer.innerHTML = protocols
+      .map(p => `
+        <div class="cycle-card">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: 700; font-size: 14px; color: #FFFFFF;">${p.name}</span>
+            <span style="font-size: 11px; padding: 2px 6px; background: rgba(56, 189, 248, 0.2); border-radius: 8px; color: var(--accent-cyan);">${p.duration} мин</span>
+          </div>
+          <div style="font-size: 11px; color: var(--text-secondary); margin: 6px 0;">${p.benefits}</div>
+          <button class="btn-nap-start" data-mins="${p.duration}" style="width: 100%; margin-top: 8px; padding: 8px; border: 1px solid var(--border-glow); background: rgba(99, 102, 241, 0.2); color: #FFF; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;">Включить Nap</button>
+        </div>
+      `)
+      .join('');
+
+    document.querySelectorAll('.btn-nap-start').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mins = parseInt(btn.getAttribute('data-mins'), 10);
+        window.somniaAudio.startBrownNoise(0.4);
+        window.somniaAudio.startRain(0.3);
+        window.somniaAudio.setSleepTimer(mins, () => {
+          alert(`⏰ Ваша сессия ${mins} мин завершена! Просыпайтесь бодрым.`);
+        });
+        alert(`⏱️ Режим сна на ${mins} мин запущен с таймером и мягким звуком!`);
+      });
+    });
+  }
+}
+
+// =====================================================================
+// 7. TRACKER & DREAM STUDIO
+// =====================================================================
+function initTrackerUI() {
+  const form = document.getElementById('dream-log-form');
+  const debtBox = document.getElementById('debt-summary-box');
+  const questsContainer = document.getElementById('quests-container');
+
+  function updateDebtSummary() {
+    const debt = window.sleepTracker.calculateSleepDebt();
+    if (debtBox) {
+      debtBox.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <span style="font-size: 13px; color: var(--text-secondary);">Сонный долг (за 7 дней):</span>
+          <span style="font-size: 16px; font-weight: 800; color: ${debt.debtHours > 3 ? 'var(--accent-rose)' : 'var(--accent-emerald)'};">${debt.debtHours > 0 ? `+${debt.debtHours} ч дефицита` : `${debt.debtHours} ч (норма)`}</span>
+        </div>
+        <div style="font-size: 11px; color: var(--text-muted);">${debt.status}</div>
+      `;
+    }
+  }
+
+  function renderQuests() {
+    if (!questsContainer) return;
+    const quests = window.sleepTracker.getDailyQuests();
+    questsContainer.innerHTML = quests
+      .map(q => `
+        <div class="quest-item ${q.done ? 'done' : ''}" data-id="${q.id}">
+          <input type="checkbox" class="quest-check" ${q.done ? 'checked' : ''} />
+          <span style="font-size: 13px; color: var(--text-secondary);">${q.text}</span>
+        </div>
+      `)
+      .join('');
+
+    questsContainer.querySelectorAll('.quest-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const qid = el.getAttribute('data-id');
+        window.sleepTracker.toggleQuest(qid);
+        renderQuests();
+      });
+    });
+  }
+
+  if (form) {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const hours = document.getElementById('log-hours').value;
+      const score = document.getElementById('log-quality').value;
+      const notes = document.getElementById('log-dream-notes').value;
+      const isLucid = document.getElementById('log-is-lucid').checked;
+
+      window.sleepTracker.addLog({
+        durationHours: hours,
+        qualityScore: score,
+        dreamNotes: notes,
+        isLucid,
+      });
+
+      form.reset();
+      updateDebtSummary();
+      window.sleepTracker.renderSvgChart('sleep-chart-box');
+      alert('✨ Запись о сне и сновидении успешно сохранена!');
+    });
+  }
+
+  updateDebtSummary();
+  renderQuests();
+  window.sleepTracker.renderSvgChart('sleep-chart-box');
+}
+
+// =====================================================================
+// 8. MELATONIN SHIELD (630nm Monochromatic Ruby Mode)
+// =====================================================================
+function initMelatoninShield() {
+  const btnShield = document.getElementById('btn-melatonin-shield');
+  if (!btnShield) return;
+
+  btnShield.addEventListener('click', () => {
+    const isActive = document.body.classList.toggle('melatonin-shield');
+    btnShield.classList.toggle('active', isActive);
+  });
+}
+
+function startClock() {
+  const clockEl = document.getElementById('shield-clock');
+  function tick() {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    if (clockEl) clockEl.textContent = `${hh}:${mm}`;
+  }
+  setInterval(tick, 1000);
+  tick();
+}
+
+
+// =====================================================================
+// 9. GEMINI 4 ARGON NEUROBIOLOGICAL MODULES CONTROLLER
+// =====================================================================
+function initArgonModules() {
+  if (!window.somniaAdenosine) return;
+
+  // --- 1. Caffeine & Adenosine Controller ---
+  const activeMgEl = document.getElementById('caffeine-active-mg');
+  const occupancyEl = document.getElementById('caffeine-occupancy');
+  const safeTimeEl = document.getElementById('caffeine-safe-time');
+  const genotypeSelect = document.getElementById('caffeine-genotype-select');
+  const dosesListEl = document.getElementById('caffeine-doses-list');
+  const btnAddDose = document.getElementById('btn-add-dose');
+  const doseNameInput = document.getElementById('new-dose-name');
+  const doseMgInput = document.getElementById('new-dose-mg');
+  const doseTimeInput = document.getElementById('new-dose-time');
+
+  // Set default time to current HH:MM
+  if (doseTimeInput) {
+    const now = new Date();
+    doseTimeInput.value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  }
+
+  function updateCaffeineUI() {
+    const state = window.somniaAdenosine.getCurrentState();
+    if (activeMgEl) activeMgEl.textContent = `${state.totalActiveMg} мг`;
+    if (occupancyEl) {
+      occupancyEl.textContent = `${state.receptorOccupancy}%`;
+      occupancyEl.style.color = state.receptorOccupancy > 25 ? '#F43F5E' : (state.receptorOccupancy > 10 ? '#F59E0B' : '#10B981');
+    }
+    if (safeTimeEl) safeTimeEl.textContent = window.somniaAdenosine.getSafeSleepTime();
+
+    // Render Doses
+    if (dosesListEl) {
+      dosesListEl.innerHTML = window.somniaAdenosine.doses.map(d => `
+        <div class="dose-pill">
+          <span>☕ ${d.name} (${d.mg} мг) в ${d.timeStr}</span>
+          <span class="dose-delete" data-id="${d.id}">✕</span>
+        </div>
+      `).join('');
+
+      dosesListEl.querySelectorAll('.dose-delete').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = Number(e.target.getAttribute('data-id'));
+          window.somniaAdenosine.deleteDose(id);
+          updateCaffeineUI();
+        });
+      });
+    }
+
+    // Render Curve
+    window.somniaAdenosine.renderCurveSVG('caffeine-svg-curve');
+  }
+
+  if (genotypeSelect) {
+    genotypeSelect.addEventListener('change', (e) => {
+      window.somniaAdenosine.genotype = e.target.value;
+      updateCaffeineUI();
+    });
+  }
+
+  if (btnAddDose) {
+    btnAddDose.addEventListener('click', () => {
+      const name = doseNameInput.value.trim() || 'Кофе';
+      const mg = Number(doseMgInput.value) || 80;
+      const time = doseTimeInput.value || '12:00';
+      window.somniaAdenosine.addDose(name, mg, time);
+      doseNameInput.value = '';
+      updateCaffeineUI();
+    });
+  }
+
+  updateCaffeineUI();
+
+  // --- 2. NSDR Session Controller ---
+  const btnNsdrStart = document.getElementById('btn-nsdr-start');
+  const btnNsdrPause = document.getElementById('btn-nsdr-pause');
+  const nsdrStageTitle = document.getElementById('nsdr-stage-title');
+  const nsdrPromptText = document.getElementById('nsdr-prompt-text');
+  const nsdrTimerDisplay = document.getElementById('nsdr-timer-display');
+  const nsdrProgressFill = document.getElementById('nsdr-progress-fill');
+
+  if (window.somniaNSDR) {
+    window.somniaNSDR.onStepChange = (step) => {
+      if (nsdrStageTitle) nsdrStageTitle.textContent = step.title;
+      if (nsdrPromptText) nsdrPromptText.textContent = step.prompt;
+    };
+
+    window.somniaNSDR.onTick = (remaining, total) => {
+      const mm = String(Math.floor(remaining / 60)).padStart(2, '0');
+      const ss = String(remaining % 60).padStart(2, '0');
+      if (nsdrTimerDisplay) nsdrTimerDisplay.textContent = `${mm}:${ss}`;
+
+      const pct = Math.max(0, Math.min(100, ((total - remaining) / total) * 100));
+      if (nsdrProgressFill) nsdrProgressFill.style.width = `${pct}%`;
+    };
+
+    if (btnNsdrStart) {
+      btnNsdrStart.addEventListener('click', () => {
+        if (!window.somniaNSDR.isRunning) {
+          window.somniaNSDR.start();
+          btnNsdrStart.textContent = '⏸ Идёт сессия NSDR';
+        } else {
+          window.somniaNSDR.pause();
+          btnNsdrStart.textContent = '▶ Продолжить NSDR';
+        }
+      });
+    }
+
+    if (btnNsdrPause) {
+      btnNsdrPause.addEventListener('click', () => {
+        window.somniaNSDR.pause();
+        if (btnNsdrStart) btnNsdrStart.textContent = '▶ Возобновить NSDR';
+      });
+    }
+  }
+
+  // --- 3. Speaker Isochronic Controller ---
+  const isochronicPresets = document.querySelectorAll('.isochronic-preset');
+  const btnToggleIsochronic = document.getElementById('btn-toggle-isochronic');
+  const sliderIsochronicVol = document.getElementById('slider-isochronic-vol');
+  const isochronicVolLabel = document.getElementById('isochronic-vol-label');
+
+  let activeCarrier = 136.1;
+  let activePulse = 2.0;
+
+  isochronicPresets.forEach(preset => {
+    preset.addEventListener('click', () => {
+      isochronicPresets.forEach(p => p.classList.remove('active'));
+      preset.classList.add('active');
+      activeCarrier = Number(preset.getAttribute('data-carrier'));
+      activePulse = Number(preset.getAttribute('data-pulse'));
+
+      if (window.somniaIsochronic && window.somniaIsochronic.isPlaying) {
+        window.somniaIsochronic.start(activeCarrier, activePulse);
+      }
+    });
+  });
+
+  if (sliderIsochronicVol) {
+    sliderIsochronicVol.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value);
+      if (window.somniaIsochronic) window.somniaIsochronic.setVolume(val);
+      if (isochronicVolLabel) isochronicVolLabel.textContent = `${Math.round(val * 100)}%`;
+    });
+  }
+
+  if (btnToggleIsochronic) {
+    btnToggleIsochronic.addEventListener('click', () => {
+      if (!window.somniaIsochronic) return;
+      if (window.somniaIsochronic.isPlaying) {
+        window.somniaIsochronic.stop();
+        btnToggleIsochronic.textContent = '▶ Включить изохроны на динамике';
+        btnToggleIsochronic.classList.remove('btn-danger-shield');
+        btnToggleIsochronic.classList.add('btn-autopilot');
+      } else {
+        window.somniaIsochronic.start(activeCarrier, activePulse);
+        btnToggleIsochronic.textContent = '⏹ Остановить изохроны';
+        btnToggleIsochronic.classList.remove('btn-autopilot');
+        btnToggleIsochronic.classList.add('btn-danger-shield');
+      }
+    });
+  }
+
+  // --- 4. Circadian Sunrise Controller ---
+  const btnSunrisePreview = document.getElementById('btn-sunrise-preview');
+  const btnSunriseFullscreen = document.getElementById('btn-sunrise-fullscreen');
+  const sunrisePreviewBox = document.getElementById('sunrise-preview-box');
+  const sunriseKelvinVal = document.getElementById('sunrise-kelvin-val');
+  const sunriseStageLbl = document.getElementById('sunrise-stage-lbl');
+
+  const sunriseFullscreenOverlay = document.getElementById('sunriseFullscreenOverlay');
+  const sunriseFullscreenKelvin = document.getElementById('sunriseFullscreenKelvin');
+  const btnExitSunrise = document.getElementById('btn-exit-sunrise');
+
+  function updateSunriseVisuals(frame, targetBox, kelvinEl) {
+    const { r, g, b } = frame.rgb;
+    if (targetBox) {
+      targetBox.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+      targetBox.style.color = frame.progress > 0.4 ? '#05060A' : '#FFFFFF';
+    }
+    if (kelvinEl) kelvinEl.textContent = `${frame.kelvin} K`;
+    if (sunriseStageLbl) {
+      if (frame.kelvin < 2200) sunriseStageLbl.textContent = 'Глубокий рубиновый свет зари (0% меланопсина)';
+      else if (frame.kelvin < 4000) sunriseStageLbl.textContent = 'Тёплый янтарный восход (Мягкое снижение мелатонина)';
+      else sunriseStageLbl.textContent = 'Дневной синий спектр D65 (Запуск кортизола и бодрости)';
+    }
+  }
+
+  if (btnSunrisePreview && window.somniaSunrise) {
+    btnSunrisePreview.addEventListener('click', () => {
+      btnSunrisePreview.disabled = true;
+      btnSunrisePreview.textContent = '🌅 Идёт рассвет...';
+
+      window.somniaSunrise.startSimulation(20, (frame) => {
+        updateSunriseVisuals(frame, sunrisePreviewBox, sunriseKelvinVal);
+      }, () => {
+        btnSunrisePreview.disabled = false;
+        btnSunrisePreview.textContent = '⚡ Тестовый рассвет (20 секунд)';
+        if (window.somniaAudio) window.somniaAudio.triggerSingingBowl(432);
+      });
+    });
+  }
+
+  if (btnSunriseFullscreen && window.somniaSunrise) {
+    btnSunriseFullscreen.addEventListener('click', () => {
+      if (sunriseFullscreenOverlay) {
+        sunriseFullscreenOverlay.style.display = 'flex';
+        try { document.documentElement.requestFullscreen(); } catch(e) {}
+      }
+
+      window.somniaSunrise.startSimulation(30, (frame) => {
+        updateSunriseVisuals(frame, sunriseFullscreenOverlay, sunriseFullscreenKelvin);
+      }, () => {
+        if (window.somniaAudio) window.somniaAudio.triggerSingingBowl(432);
+      });
+    });
+  }
+
+  if (btnExitSunrise) {
+    btnExitSunrise.addEventListener('click', () => {
+      if (window.somniaSunrise) window.somniaSunrise.stop();
+      if (sunriseFullscreenOverlay) sunriseFullscreenOverlay.style.display = 'none';
+      try { if (document.fullscreenElement) document.exitFullscreen(); } catch(e) {}
+    });
+  }
+}

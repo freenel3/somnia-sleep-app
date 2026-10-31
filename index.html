@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SOMNIA — Neuro-Circadian Sleep Sanctuary</title>
+  <meta name="description" content="Автономное приложение нового поколения для оптимизации сна, биохакинга циркадных ритмов и глубокого восстановления нервной системы.">
+  <meta name="theme-color" content="#05060A">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Somnia">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <canvas id="ambient-canvas"></canvas>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon">🌙</div>
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="brand-title">SOMNIA</span>
+            <span class="brand-badge">2026 v3.4</span>
+          </div>
+          <div style="font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px;">NEURO-CIRCADIAN SANCTUARY</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="btn-open-mobile" class="btn-icon" style="background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); color: #38BDF8; padding: 6px 12px; border-radius: 12px; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;" title="Открыть на телефоне">
+          📱 На телефон
+        </button>
+        <button id="btn-melatonin-shield" class="btn-icon" title="Включить Melatonin Shield (Красный спектр 630 нм)">
+          🛡️
+        </button>
+      </div>
+    </header>
+
+    <!-- Bedside Digital Clock (Visible in Melatonin Shield Mode) -->
+    <div id="shield-clock" class="shield-clock-display">00:00</div>
+
+    <!-- Hero Card: Night Autopilot -->
+    <section class="hero-card">
+      <div class="hero-header">
+        <div>
+          <div class="hero-subtitle">Нейро-Автопилот Засыпания</div>
+          <h1 class="hero-title">Идеальный Кокон Сна</h1>
+          <p class="hero-desc">
+            1 клик запускает научно обоснованную смесь: дельта-волны 2.0 Гц для торможения коры, теплый коричневый шум и шум дождя с плавным затуханием.
+          </p>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+        <button id="btn-autopilot" class="btn-autopilot">
+          <span>🚀</span> Запустить Автопилот Сна
+        </button>
+
+        <div style="display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.3); padding: 8px 14px; border-radius: 12px; border: 1px solid var(--border-subtle);">
+          <span style="font-size: 13px; color: var(--text-secondary);">Таймер сна:</span>
+          <select id="select-timer" style="background: transparent; border: none; color: #FFF; font-weight: 700; font-size: 13px; outline: none; cursor: pointer;">
+            <option value="30" style="background: #0A0D18;">30 минут</option>
+            <option value="45" selected style="background: #0A0D18;">45 минут</option>
+            <option value="60" style="background: #0A0D18;">60 минут</option>
+            <option value="90" style="background: #0A0D18;">90 минут (1 цикл)</option>
+            <option value="0" style="background: #0A0D18;">Без таймера</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Sound Layers Mixer -->
+      <div class="sound-mixer-grid">
+        <div class="sound-track">
+          <div class="track-info">
+            <span>🌊 Коричневый шум</span>
+            <button class="track-toggle" data-track="brown">🔊</button>
+          </div>
+          <input type="range" id="slider-brown" class="slider-styled" min="0" max="1" step="0.05" value="0.45">
+        </div>
+
+        <div class="sound-track">
+          <div class="track-info">
+            <span>🌧️ Дождь за стеклом</span>
+            <button class="track-toggle" data-track="rain">🔊</button>
+          </div>
+          <input type="range" id="slider-rain" class="slider-styled" min="0" max="1" step="0.05" value="0.30">
+        </div>
+
+        <div class="sound-track">
+          <div class="track-info">
+            <span>🧠 Дельта-ритм (2.0 Гц)</span>
+            <button class="track-toggle" data-track="delta">🔊</button>
+          </div>
+          <input type="range" id="slider-delta" class="slider-styled" min="0" max="1" step="0.05" value="0.25">
+        </div>
+      </div>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="nav-tab-btn active" data-tab="tab-twin">🔮 Sleep Twin</button>
+      <button class="nav-tab-btn" data-tab="tab-caffeine">🧬 Аденозин (Argon)</button>
+      <button class="nav-tab-btn" data-tab="tab-nsdr">🧘 NSDR Погружение</button>
+      <button class="nav-tab-btn" data-tab="tab-isochronic">🔊 Изохроны (Без наушников)</button>
+      <button class="nav-tab-btn" data-tab="tab-sunrise">🌅 Циркадный Рассвет</button>
+      <button class="nav-tab-btn" data-tab="tab-breath">🫁 Вагус-Дыхание</button>
+      <button class="nav-tab-btn" data-tab="tab-cycles">⏱️ 90-мин Циклы</button>
+      <button class="nav-tab-btn" data-tab="tab-tracker">🌌 Dream Studio</button>
+    </nav>
+
+    <!-- TAB 1: SLEEP TWIN (AI PREDICTION) -->
+    <section id="tab-twin" class="tab-content active">
+      <div class="content-card">
+        <div class="card-title-row">
+          <h2 class="card-title">🔮 Цифровой Двойник Сна (Sleep Twin)</h2>
+          <span style="font-size: 11px; color: var(--accent-cyan); background: rgba(56, 189, 248, 0.1); padding: 4px 10px; border-radius: 12px; border: 1px solid var(--border-glow);">Фармакокинетика & Циркадные ритмы</span>
+        </div>
+
+        <div class="twin-score-box">
+          <div id="twin-gauge" class="gauge-circle" style="--pct: 320deg;">
+            <div class="gauge-inner">
+              <span id="twin-score-num" class="gauge-val">88</span>
+              <span class="gauge-lbl">Score</span>
+            </div>
+          </div>
+          <div>
+            <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Прогноз бодрости завтра</div>
+            <div id="twin-score-label" style="font-size: 20px; font-weight: 800; color: #FFFFFF; margin: 2px 0 8px;">Идеальное (Deep Regenerative)</div>
+            <ul id="twin-insights-list" style="list-style: none;"></ul>
+          </div>
+        </div>
+
+        <div class="twin-factors-form">
+          <div class="factor-group">
+            <label>☕ Кофеин (мг)</label>
+            <input type="number" id="twin-caffeine-mg" class="factor-input" value="100" min="0" max="600" step="10">
+          </div>
+          <div class="factor-group">
+            <label>⏳ Сколько часов назад выпит кофе?</label>
+            <input type="number" id="twin-caffeine-hours" class="factor-input" value="8" min="0" max="24" step="0.5">
+          </div>
+          <div class="factor-group">
+            <label>📱 Минут у экрана перед сном</label>
+            <input type="number" id="twin-screen-mins" class="factor-input" value="20" min="0" max="180" step="5">
+          </div>
+          <div class="factor-group">
+            <label>🌡️ Температура в спальне (°C)</label>
+            <input type="number" id="twin-room-temp" class="factor-input" value="19" min="14" max="28" step="0.5">
+          </div>
+          <div class="factor-group">
+            <label>🍷 Алкоголь (порций)</label>
+            <input type="number" id="twin-alcohol-drinks" class="factor-input" value="0" min="0" max="10" step="1">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: BREATHWORK (VAGUS ACTIVATOR) -->
+    <section id="tab-breath" class="tab-content">
+      <div class="content-card">
+        <div class="card-title-row">
+          <h2 class="card-title">🫁 Вагус-Активатор: Дыхательные Протоколы</h2>
+          <span id="breath-cycle-badge" style="font-size: 12px; color: var(--accent-cyan); font-weight: 700;">Цикл: 0</span>
+        </div>
+
+        <div class="breath-canvas-container">
+          <div class="breath-circle-wrapper">
+            <div id="breath-ring" class="breath-pulse-ring"></div>
+            <div class="breath-center-content">
+              <div id="breath-phase" class="breath-phase-text">Готовность</div>
+              <div id="breath-timer" class="breath-timer-text">0с</div>
+            </div>
+          </div>
+
+          <div id="breath-instruction" class="breath-instruction">
+            Выберите протокол и нажмите «Начать практику» для включения гармонических колокольчиков и визуального резонанса.
+          </div>
+
+          <button id="btn-breath-toggle" class="btn-autopilot" style="margin-top: 18px;">
+            ▶️ Начать практику
+          </button>
+        </div>
+
+        <!-- Protocol Switcher -->
+        <div class="protocol-selector">
+          <button class="btn-protocol active" data-proto="478">
+            <div>4-7-8 Вейла</div>
+            <div style="font-size: 10px; color: var(--text-muted);">Парасимпатика</div>
+          </button>
+          <button class="btn-protocol" data-proto="box">
+            <div>Box 4-4-4-4</div>
+            <div style="font-size: 10px; color: var(--text-muted);">Снятие тревоги</div>
+          </button>
+          <button class="btn-protocol" data-proto="sigh">
+            <div>Физиол. вздох</div>
+            <div style="font-size: 10px; color: var(--text-muted);">Сброс кортизола</div>
+          </button>
+          <button class="btn-protocol" data-proto="coherent">
+            <div>Когерентное 5.5с</div>
+            <div style="font-size: 10px; color: var(--text-muted);">HRV Резонанс</div>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: 90-MIN CYCLES & NASA NAP STATION -->
+    <section id="tab-cycles" class="tab-content">
+      <div class="content-card">
+        <div class="card-title-row">
+          <h2 class="card-title">⏱️ Калькулятор 90-минутных Ультрадианных Циклов</h2>
+        </div>
+        <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+          Просыпаясь ровно в конце 90-минутного цикла (на выходе из фазы REM), вы исключаете <b>сонную инерцию</b> (чувство «разбитости»). Расчет включает 14 минут на засыпание.
+        </p>
+
+        <div style="margin-top: 18px; display: flex; align-items: center; gap: 12px;">
+          <label style="font-size: 13px; font-weight: 600; color: #FFFFFF;">Во сколько нужно проснуться?</label>
+          <input type="time" id="calc-wake-time" class="factor-input" value="07:30" style="font-size: 16px; font-weight: 700;">
+        </div>
+
+        <div style="margin-top: 12px; font-size: 12px; color: var(--text-muted);">Рекомендуемое время отхода ко сну:</div>
+        <div id="bedtimes-results" class="cycle-options-grid"></div>
+      </div>
+
+      <!-- NASA Ames Nap Station -->
+      <div class="content-card">
+        <div class="card-title-row">
+          <h2 class="card-title">🚀 NASA Nap Station</h2>
+          <span style="font-size: 11px; color: var(--accent-purple); background: rgba(168, 85, 247, 0.15); padding: 4px 10px; border-radius: 12px; border: 1px solid rgba(168, 85, 247, 0.3);">Космические протоколы</span>
+        </div>
+        <div id="naps-grid" class="cycle-options-grid"></div>
+      </div>
+    </section>
+
+    <!-- TAB 4: DREAM STUDIO & SLEEP DEBT TRACKER -->
+    <section id="tab-tracker" class="tab-content">
+      <div class="content-card">
+        <div class="card-title-row">
+          <h2 class="card-title">📊 Аналитика Сна и Сонный Долг</h2>
+        </div>
+        <div id="debt-summary-box"></div>
+        <div id="sleep-chart-box" class="chart-container"></div>
+      </div>
+
+      <!-- Daily Habit Quests -->
+      <div class="content-card">
+        <div class="card-title-row">
+          <h2 class="card-title">🎯 Биохакерские квесты на сегодня</h2>
+        </div>
+        <div id="quests-container" class="quest-list"></div>
+      </div>
+
+      <!-- Dream Journal Log -->
+      <div class="content-card">
+        <div class="card-title-row">
+          <h2 class="card-title">🌌 Дневник Сновидений (Dream Studio)</h2>
+        </div>
+        <form id="dream-log-form" style="display: flex; flex-direction: column; gap: 14px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="factor-group">
+              <label>Часов сна</label>
+              <input type="number" id="log-hours" class="factor-input" value="7.5" step="0.5" min="2" max="14" required>
+            </div>
+            <div class="factor-group">
+              <label>Оценка самочувствия (1-100)</label>
+              <input type="number" id="log-quality" class="factor-input" value="85" min="1" max="100" required>
+            </div>
+          </div>
+
+          <div class="factor-group">
+            <label>Заметки о сновидении или инсайты утра</label>
+            <textarea id="log-dream-notes" class="factor-input" rows="3" placeholder="Что снилось? Ключевые образы, эмоции..."></textarea>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <input type="checkbox" id="log-is-lucid" class="quest-check">
+            <label for="log-is-lucid" style="font-size: 13px; color: var(--accent-cyan); font-weight: 600; cursor: pointer;">✨ Это был осознанный сон (Lucid Dream)</label>
+          </div>
+
+          <button type="submit" class="btn-autopilot" style="align-self: flex-start; padding: 10px 20px; font-size: 13px;">
+            💾 Записать в дневник
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- TAB: ADENOSINE & CAFFEINE KINETICS (ARGON MODULE 1) -->
+    <section id="tab-caffeine" class="tab-content">
+      <div class="content-card">
+        <div class="card-title-row">
+          <h2 class="card-title">🧬 Кинетика Аденозина & Кофеина (Process S)</h2>
+          <span class="argon-badge">⚡ Gemini 4 Argon Model</span>
+        </div>
+        <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+          Кофеин — конкурентный антагонист рецепторов A1 и A2A. Модель рассчитывает точную занятость рецепторов (Hill-Langmuir) с учетом вашего генотипа CYP1A2.
+        </p>
+
+        <!-- Current Status Highlights -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 18px 0;">
+          <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); padding: 14px; border-radius: var(--radius-sm);">
+            <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Активный кофеин в крови</div>
+            <div id="caffeine-active-mg" style="font-size: 26px; font-weight: 800; color: #F59E0B; margin-top: 4px;">-- мг</div>
+          </div>
+          <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); padding: 14px; border-radius: var(--radius-sm);">
+            <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Занятость A2A рецепторов</div>
+            <div id="caffeine-occupancy" style="font-size: 26px; font-weight: 800; color: #F43F5E; margin-top: 4px;">-- %</div>
+          </div>
+          <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); padding: 14px; border-radius: var(--radius-sm);">
+            <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Безопасный отход ко сну</div>
+            <div id="caffeine-safe-time" style="font-size: 20px; font-weight: 800; color: #10B981; margin-top: 6px;">--:--</div>
+          </div>
+        </div>
+
+        <!-- Genotype Selector -->
+        <div class="factor-group" style="margin-bottom: 16px;">
+          <label>Генетический полиморфизм фермента CYP1A2:</label>
+          <select id="caffeine-genotype-select" class="factor-input" style="font-weight: 600;">
+            <option value="FAST">CYP1A2*1A/*1A — Сверхбыстрый метаболизм (T 1/2 = 3.0 ч)</option>
+            <option value="NORMAL" selected>CYP1A2 — Стандартный европейский метаболизм (T 1/2 = 5.0 ч)</option>
+            <option value="SLOW">CYP1A2*1F — Медленный метаболизатор (T 1/2 = 8.5 ч, затяжной спад)</option>
+          </select>
+        </div>
+
+        <!-- 24h Decay Curve SVG -->
+        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Фармакокинетический график блокады рецепторов (24 часа):</div>
+        <div class="caffeine-curve-container">
+          <svg id="caffeine-svg-curve" width="100%" height="100%" viewBox="0 0 600 200"></svg>
+        </div>
+
+        <!-- Doses List & Add form -->
+        <div style="margin-top: 20px;">
+          <h3 style="font-size: 14px; font-weight: 700; margin-bottom: 10px;">Приёмы кофеина сегодня:</h3>
+          <div id="caffeine-doses-list" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px;"></div>
+
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <input type="text" id="new-dose-name" placeholder="Напиток (Эспрессо, чай)" class="factor-input" style="flex: 2; min-width: 140px;">
+            <input type="number" id="new-dose-mg" placeholder="мг (напр. 80)" class="factor-input" style="flex: 1; min-width: 90px;" value="80">
+            <input type="time" id="new-dose-time" class="factor-input" style="flex: 1; min-width: 100px;">
+            <button id="btn-add-dose" class="btn-autopilot" style="padding: 8px 16px; font-size: 12px;">+ Добавить</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: NSDR (ARGON MODULE 2) -->
+    <section id="tab-nsdr" class="tab-content">
+      <div class="content-card">
+        <div class="card-title-row">
+          <h2 class="card-title">🧘 Протокол NSDR / Yoga Nidra (Эндрю Хуберман)</h2>
+          <span class="argon-badge">⚡ Gemini 4 Argon Model</span>
+        </div>
+        <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+          Non-Sleep Deep Rest: глубокая перезагрузка дофаминовых рецепторов полосатого тела (Striatum) и активация парасимпатики блуждающего нерва без погружения в бессознательность.
+        </p>
+
+        <div class="nsdr-box" style="margin-top: 18px;">
+          <div style="font-size: 12px; color: var(--accent-cyan); text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">
+            Текущая фаза протокола
+          </div>
+          <div id="nsdr-stage-title" style="font-size: 24px; font-weight: 800; color: #FFFFFF; margin-top: 4px;">
+            Готов к запуску
+          </div>
+
+          <div id="nsdr-prompt-text" class="nsdr-prompt">
+            Нажмите кнопку «Начать сессию NSDR», устройтесь поудобнее на спине или в кресле и следуйте аудио-текстовым инструкциям.
+          </div>
+
+          <div style="font-size: 36px; font-weight: 900; font-family: monospace; color: var(--accent-purple);" id="nsdr-timer-display">
+            --:--
+          </div>
+
+          <div class="nsdr-progress-track">
+            <div id="nsdr-progress-fill" class="nsdr-progress-fill"></div>
+          </div>
+
+          <div style="margin-top: 24px; display: flex; justify-content: center; gap: 12px;">
+            <button id="btn-nsdr-start" class="btn-autopilot" style="padding: 12px 28px; font-size: 14px;">▶ Начать сессию NSDR</button>
+            <button id="btn-nsdr-pause" class="btn-danger-shield" style="padding: 12px 20px; font-size: 14px;">⏸ Пауза</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: SPEAKER ISOCHRONIC (ARGON MODULE 3) -->
+    <section id="tab-isochronic" class="tab-content">
+      <div class="content-card">
+        <div class="card-title-row">
+          <h2 class="card-title">🔊 Акустические Изохронические Тоны (Без наушников)</h2>
+          <span class="argon-badge">⚡ Gemini 4 Argon Model</span>
+        </div>
+        <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+          В отличие от бинауральных ритмов, которым <i>обязательно</i> требуются наушники для стерео-разделения каналов, <b>изохронические тона</b> используют амплитудную модуляцию (сглаженное окно Tukey) и эффективно синхронизируют волны мозга прямо через динамики смартфона на тумбочке.
+        </p>
+
+        <div style="margin-top: 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+          <div class="cycle-card isochronic-preset active" data-carrier="136.1" data-pulse="2.0">
+            <div style="font-size: 11px; color: var(--accent-emerald); font-weight: 700;">ДЕЛЬТА 2.0 ГЦ</div>
+            <div style="font-size: 18px; font-weight: 800; margin: 4px 0;">Глубокий медленный сон</div>
+            <div style="font-size: 12px; color: var(--text-muted);">Несущая 136.1 Гц (Ом) для динамика</div>
+          </div>
+
+          <div class="cycle-card isochronic-preset" data-carrier="216" data-pulse="5.5">
+            <div style="font-size: 11px; color: var(--accent-cyan); font-weight: 700;">ТЕТА 5.5 ГЦ</div>
+            <div style="font-size: 18px; font-weight: 800; margin: 4px 0;">Дневная дремота / REM</div>
+            <div style="font-size: 12px; color: var(--text-muted);">Креативность и расслабление</div>
+          </div>
+
+          <div class="cycle-card isochronic-preset" data-carrier="174" data-pulse="10.0">
+            <div style="font-size: 11px; color: var(--accent-purple); font-weight: 700;">АЛЬФА 10 ГЦ</div>
+            <div style="font-size: 18px; font-weight: 800; margin: 4px 0;">Вечернее расслабление</div>
+            <div style="font-size: 12px; color: var(--text-muted);">Снятие дневного напряжения</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); padding: 18px; border-radius: var(--radius-md);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <span style="font-size: 14px; font-weight: 700;">Громкость динамика:</span>
+            <span id="isochronic-vol-label" style="font-size: 14px; color: var(--accent-cyan); font-weight: 700;">45%</span>
+          </div>
+          <input type="range" id="slider-isochronic-vol" class="slider-styled" min="0" max="1" step="0.05" value="0.45">
+
+          <div style="margin-top: 20px; display: flex; justify-content: center;">
+            <button id="btn-toggle-isochronic" class="btn-autopilot" style="padding: 12px 32px; font-size: 14px;">
+              ▶ Включить изохроны на динамике
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: CIRCADIAN SUNRISE (ARGON MODULE 4) -->
+    <section id="tab-sunrise" class="tab-content">
+      <div class="content-card">
+        <div class="card-title-row">
+          <h2 class="card-title">🌅 Симулятор Циркадного Рассвета (Melanopic Sunrise)</h2>
+          <span class="argon-badge">⚡ Gemini 4 Argon Model</span>
+        </div>
+        <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+          Световая волна 480 нм стимулирует клетки ipRGC сетчатки глаза, подавляя мелатонин и мягко активируя реакцию пробуждения кортизола (Cortisol Awakening Response) без стрессового скачка адреналина от резкого будильника.
+        </p>
+
+        <div id="sunrise-preview-box" class="sunrise-preview-box">
+          <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.8;">Текущая цветовая температура</div>
+          <div id="sunrise-kelvin-val" style="font-size: 42px; font-weight: 900; margin: 4px 0;">1500 K</div>
+          <div id="sunrise-stage-lbl" style="font-size: 14px; opacity: 0.9;">Глубокий рубиновый свет зари (0% меланопсина)</div>
+        </div>
+
+        <div style="margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap;">
+          <button id="btn-sunrise-preview" class="btn-autopilot" style="flex: 1; padding: 12px; font-size: 13px;">
+            ⚡ Тестовый рассвет (20 секунд)
+          </button>
+          <button id="btn-sunrise-fullscreen" class="btn-danger-shield" style="flex: 1; padding: 12px; font-size: 13px; border-color: #F59E0B; color: #FBBF24;">
+            🖥️ На весь экран
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Sunrise Fullscreen Overlay -->
+  <div id="sunriseFullscreenOverlay" class="sunrise-fullscreen-overlay">
+    <div style="font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: rgba(255,255,255,0.7); margin-bottom: 8px;">
+      🌅 Circadian Dawn Simulator
+    </div>
+    <div id="sunriseFullscreenKelvin" style="font-size: 64px; font-weight: 900; color: #FFFFFF;">
+      1500 K
+    </div>
+    <div id="sunriseFullscreenClock" style="font-size: 32px; font-weight: 700; color: rgba(255,255,255,0.85); margin: 10px 0 30px;">
+      07:00
+    </div>
+    <button id="btn-exit-sunrise" class="btn-danger-shield" style="padding: 10px 24px; font-size: 13px;">
+      ✕ Закрыть рассвет
+    </button>
+  </div>
+
+  <!-- Mobile Phone QR Modal -->
+  <div id="mobileModal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); z-index: 999999; backdrop-filter: blur(10px); align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: #0f172a; border: 1px solid var(--border-glow); border-radius: 24px; padding: 28px; max-width: 380px; width: 100%; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8);">
+      <div style="font-size: 32px; margin-bottom: 8px;">📱</div>
+      <h3 style="font-size: 20px; font-weight: 800; color: #FFFFFF; margin-bottom: 6px;">Somnia на телефоне</h3>
+      <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 18px;">
+        Подключите телефон к тому же Wi-Fi и наведите камеру на QR-код:
+      </p>
+
+      <div style="background: #FFFFFF; padding: 12px; border-radius: 16px; display: inline-block; margin-bottom: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.4);">
+        <img id="mobileQrImg" src="" alt="QR Code" width="180" height="180" style="display: block; border-radius: 8px;">
+      </div>
+
+      <div id="mobileLanUrl" style="font-family: monospace; font-size: 14px; font-weight: 700; color: var(--accent-cyan); background: rgba(0,0,0,0.4); padding: 8px 12px; border-radius: 8px; margin-bottom: 18px; word-break: break-all;">
+        http://192.168.1.184:8089
+      </div>
+
+      <div style="text-align: left; background: rgba(255,255,255,0.03); padding: 14px; border-radius: 12px; font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 20px;">
+        <div style="color: #FFFFFF; font-weight: 700; margin-bottom: 6px;">Как установить на телефон как приложение:</div>
+        <div>🤖 <b>Android (Chrome):</b> Нажмите 3 точки в углу → <b>«Установить приложение»</b>.</div>
+        <div style="margin-top: 6px;">🍎 <b>iPhone (Safari):</b> Нажмите кнопку <b>«Поделиться» 📤</b> → <b>«На экран Домой»</b>.</div>
+      </div>
+
+      <button id="btn-close-mobile-modal" class="btn-autopilot" style="width: 100%; padding: 12px; font-size: 13px;">
+        Понятно, закрыть
+      </button>
+    </div>
+  </div>
+
+  <script src="audio-engine.js"></script>
+  <script src="sleep-engine.js"></script>
+  <script src="argon-modules.js"></script>
+  <script src="breathwork.js"></script>
+  <script src="tracker.js"></script>
+  <script src="app.js"></script>
+  <script>
+    // Register Service Worker for 100% Offline PWA Mode
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').then((reg) => {
+          console.log('[Somnia] ServiceWorker ready for offline PWA:', reg.scope);
+        }).catch((err) => {
+          console.log('[Somnia] ServiceWorker registration skipped:', err);
+        });
+      });
+    }
+
+    // Mobile QR Modal Logic
+    const btnOpenMobile = document.getElementById('btn-open-mobile');
+    const mobileModal = document.getElementById('mobileModal');
+    const btnCloseMobile = document.getElementById('btn-close-mobile-modal');
+    const mobileQrImg = document.getElementById('mobileQrImg');
+    const mobileLanUrl = document.getElementById('mobileLanUrl');
+
+    if (btnOpenMobile && mobileModal) {
+      const lanUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        ? `http://192.168.1.184:${window.location.port || 8089}` 
+        : window.location.href;
+
+      if (mobileLanUrl) mobileLanUrl.textContent = lanUrl;
+      if (mobileQrImg) {
+        mobileQrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=0&data=${encodeURIComponent(lanUrl)}`;
+      }
+
+      btnOpenMobile.addEventListener('click', () => {
+        mobileModal.style.display = 'flex';
+      });
+
+      btnCloseMobile.addEventListener('click', () => {
+        mobileModal.style.display = 'none';
+      });
+
+      mobileModal.addEventListener('click', (e) => {
+        if (e.target === mobileModal) mobileModal.style.display = 'none';
+      });
+    }
+  </script>
+</body>
+</html>
