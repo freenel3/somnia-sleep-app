@@ -899,6 +899,14 @@ function initMiFitSyncUI() {
       renderWatchTelemetry();
       if (window.sleepyAI) renderSleepyAICoach();
       if (window.Haptics) window.Haptics.success();
+
+      const badge = document.getElementById('auto-sync-badge');
+      const badgeText = document.getElementById('auto-sync-badge-text');
+      if (badge && badgeText) {
+        badgeText.textContent = '✓ Данные Redmi Watch 5 Active синхронизированы (Глубокий: ' + Math.floor(window.miFitSync.telemetry.deepMinutes/60) + 'ч ' + (window.miFitSync.telemetry.deepMinutes%60) + 'м, Пульс: ' + window.miFitSync.telemetry.restingHR + ' уд/мин)';
+        badge.classList.add('visible');
+        setTimeout(() => badge.classList.remove('visible'), 4000);
+      }
     });
   }
 

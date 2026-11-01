@@ -73,14 +73,17 @@ class MiFitnessSyncEngine {
       if (window.Haptics) window.Haptics.medium();
 
       const device = await navigator.bluetooth.requestDevice({
-        filters: [
-          { namePrefix: 'Redmi' },
-          { namePrefix: 'Xiaomi' },
-          { namePrefix: 'Mi' },
-          { namePrefix: 'Watch' },
-          { namePrefix: 'Band' }
-        ],
-        optionalServices: ['heart_rate', 0x180D, 0x180A, 0xFEE0, 0xFEE1]
+        acceptAllDevices: true,
+        optionalServices: [
+          'heart_rate',
+          0x180D, // Heart Rate
+          0x180A, // Device Information
+          0x1800, // Generic Access
+          0x1801, // Generic Attribute
+          0xFE95, // Xiaomi Inc. Primary Service
+          0xFEE0, // Huami/Xiaomi Base
+          0xFEE1  // Huami/Xiaomi Auth
+        ]
       });
 
       this.deviceName = device.name || 'Redmi Watch 5 Active';
