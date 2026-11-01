@@ -359,13 +359,13 @@ body {
 
 /* --- Tab Content Containers --- */
 .tab-content {
-  display: none;
+  display: none !important;
   flex-direction: column;
   gap: 20px;
 }
 
 .tab-content.active {
-  display: flex;
+  display: flex !important;
   animation: fadeIn 0.3s ease;
 }
 

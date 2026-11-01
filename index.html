@@ -10,8 +10,23 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Somnia">
-  <link rel="stylesheet" href="styles.css">
-  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css?v=2026.10">
+  <link rel="manifest" href="manifest.json?v=2026.10">
+  <script>
+    // Somnia 2026 Cache Auto-Purge: forces Android Chrome to flush stale cache on update
+    const SOMNIA_BUILD = '2026.10.1';
+    if (localStorage.getItem('somnia_build_v') !== SOMNIA_BUILD) {
+      if ('caches' in window) {
+        caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))));
+      }
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(regs => {
+          for (let reg of regs) reg.unregister();
+        });
+      }
+      localStorage.setItem('somnia_build_v', SOMNIA_BUILD);
+    }
+  </script>
 </head>
 <body>
   <!-- Floating Native Push-Badge (Zero-Click Auto-Sync) -->
@@ -162,6 +177,51 @@
           <div class="factor-group">
             <label>🍷 Алкоголь (порций)</label>
             <input type="number" id="twin-alcohol-drinks" class="factor-input" value="0" min="0" max="10" step="1">
+          </div>
+        </div>
+      </div>
+
+      <!-- Prominent Mobile Bento Hub: 3 Key Modules -->
+      <div class="content-card" style="background: linear-gradient(135deg, rgba(30, 27, 75, 0.5), rgba(15, 23, 42, 0.7)); border: 1px solid rgba(168, 85, 247, 0.4);">
+        <div style="font-size: 11px; color: var(--accent-cyan); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">
+          🚀 Главные разделы приложения (нажми для перехода):
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr; gap: 10px;">
+          <!-- Card 1: Course 30 Days -->
+          <div class="quick-nav-card nav-tab-btn" data-tab="tab-course" style="cursor: pointer; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 14px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-size: 26px;">🏆</span>
+              <div style="text-align: left;">
+                <div style="font-size: 15px; font-weight: 800; color: #FFFFFF;">Курс «Слипи 30 Дней»</div>
+                <div style="font-size: 11.5px; color: #38BDF8;">Научный CBT-I трек • Прогресс: День 1 из 30</div>
+              </div>
+            </div>
+            <span style="font-size: 18px; color: #38BDF8; font-weight: 800;">➔</span>
+          </div>
+
+          <!-- Card 2: AI Coach 100% -->
+          <div class="quick-nav-card nav-tab-btn" data-tab="tab-ai" style="cursor: pointer; background: rgba(168, 85, 247, 0.12); border: 1px solid rgba(168, 85, 247, 0.35); border-radius: 14px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-size: 26px;">🤖</span>
+              <div style="text-align: left;">
+                <div style="font-size: 15px; font-weight: 800; color: #FFFFFF;">Слипи AI (100% Сон)</div>
+                <div style="font-size: 11.5px; color: #C084FC;">Индекс SQI: 88% • 3 шага к 100% • Живой чат</div>
+              </div>
+            </div>
+            <span style="font-size: 18px; color: #C084FC; font-weight: 800;">➔</span>
+          </div>
+
+          <!-- Card 3: Watch Mi Fitness -->
+          <div class="quick-nav-card nav-tab-btn" data-tab="tab-watch" style="cursor: pointer; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 14px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-size: 26px;">⌚</span>
+              <div style="text-align: left;">
+                <div style="font-size: 15px; font-weight: 800; color: #FFFFFF;">Mi Fitness & Redmi Watch</div>
+                <div style="font-size: 11.5px; color: #34D399;">Авто-синхронизация • Глубокий сон • Пульс</div>
+              </div>
+            </div>
+            <span style="font-size: 18px; color: #34D399; font-weight: 800;">➔</span>
           </div>
         </div>
       </div>
@@ -745,15 +805,15 @@
     </div>
   </div>
 
-  <script src="audio-engine.js"></script>
-  <script src="sleep-engine.js"></script>
-  <script src="argon-modules.js"></script>
-  <script src="breathwork.js"></script>
-  <script src="tracker.js"></script>
-  <script src="sleepy-course.js"></script>
-  <script src="mifit-sync.js"></script>
-  <script src="sleepy-ai.js"></script>
-  <script src="app.js"></script>
+  <script src="audio-engine.js?v=2026.10"></script>
+  <script src="sleep-engine.js?v=2026.10"></script>
+  <script src="argon-modules.js?v=2026.10"></script>
+  <script src="breathwork.js?v=2026.10"></script>
+  <script src="tracker.js?v=2026.10"></script>
+  <script src="sleepy-course.js?v=2026.10"></script>
+  <script src="mifit-sync.js?v=2026.10"></script>
+  <script src="sleepy-ai.js?v=2026.10"></script>
+  <script src="app.js?v=2026.10"></script>
   <script>
     // Register Service Worker for 100% Offline PWA Mode
     if ('serviceWorker' in navigator) {

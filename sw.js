@@ -1,9 +1,9 @@
 /**
- * SOMNIA 2026 - SERVICE WORKER (OFFLINE PWA CACHE)
- * Enables 100% offline functionality on mobile phones (Android / iOS).
+ * SOMNIA 2026 - SERVICE WORKER (NETWORK-FIRST WITH AUTO-PURGE)
+ * Ensures user ALWAYS sees latest live updates immediately, with offline cache fallback.
  */
 
-const CACHE_NAME = 'somnia-pwa-v3';
+const CACHE_NAME = 'somnia-pwa-v10-live-2026';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -21,11 +21,12 @@ const ASSETS_TO_CACHE = [
 ];
 
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Somnia SW] Caching app shell & procedural assets...');
+      console.log('[Somnia SW v10] Precaching shell...');
       return cache.addAll(ASSETS_TO_CACHE);
-    }).then(() => self.skipWaiting())
+    })
   );
 });
 
@@ -35,7 +36,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         keyList.map((key) => {
           if (key !== CACHE_NAME) {
-            console.log('[Somnia SW] Removing old cache:', key);
+            console.log('[Somnia SW v10] Purging legacy cache:', key);
             return caches.delete(key);
           }
         })
@@ -44,27 +45,27 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// NETWORK-FIRST STRATEGY: Always fetch latest code from GitHub Pages, fallback to cache if offline
 self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      if (response) {
-        return response; // Return from cache
-      }
-      return fetch(event.request).then((networkResponse) => {
-        // Cache new static resources if valid
-        if (event.request.method === 'GET' && networkResponse && networkResponse.status === 200) {
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
           const respClone = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, respClone);
           });
         }
         return networkResponse;
-      }).catch(() => {
-        // Fallback for navigation requests
-        if (event.request.mode === 'navigate') {
-          return caches.match('./index.html');
-        }
-      });
-    })
+      })
+      .catch(() => {
+        return caches.match(event.request).then((cached) => {
+          if (cached) return cached;
+          if (event.request.mode === 'navigate') {
+            return caches.match('./index.html');
+          }
+        });
+      })
   );
 });
