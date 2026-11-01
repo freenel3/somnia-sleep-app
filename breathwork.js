@@ -108,6 +108,17 @@ class BreathworkEngine {
   }
 
   notifyPhase() {
+    if (window.Haptics) {
+      try {
+        if (this.currentStep && this.currentStep.action && this.currentStep.action.includes('inhale')) {
+          window.Haptics.light();
+        } else if (this.currentStep && this.currentStep.action === 'hold') {
+          window.Haptics.selection();
+        } else {
+          window.Haptics.medium();
+        }
+      } catch (e) {}
+    }
     if (this.onPhaseChange) {
       this.onPhaseChange(this.currentStep, this.cycleCount);
     }

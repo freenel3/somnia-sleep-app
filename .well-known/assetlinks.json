@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.freenel3.somniasleep",
+      "sha256_cert_fingerprints": [
+        "BB:34:3D:61:24:38:C9:D1:5F:F3:A5:05:09:C7:72:F4:0C:D1:BD:73:93:93:75:8A:40:4F:E2:89:41:49:64:A1",
+        "54:A4:60:46:09:71:66:F7:F4:AE:80:F2:7E:4C:AE:C3:82:79:53:7B:D2:F6:3D:D7:E3:9A:4E:3D:45:C3:42:21"
+      ]
+    }
+  }
+]

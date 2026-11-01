@@ -56,28 +56,70 @@ function initAmbientCanvas() {
 }
 
 // =====================================================================
-// 2. TAB NAVIGATION
+// 2. NATIVE HAPTICS & SYNCHRONIZED TAB NAVIGATION (2026)
 // =====================================================================
+const Haptics = {
+  selection: () => {
+    if ('vibrate' in navigator) try { navigator.vibrate(10); } catch(e){}
+  },
+  light: () => {
+    if ('vibrate' in navigator) try { navigator.vibrate(16); } catch(e){}
+  },
+  medium: () => {
+    if ('vibrate' in navigator) try { navigator.vibrate(28); } catch(e){}
+  },
+  success: () => {
+    if ('vibrate' in navigator) try { navigator.vibrate([15, 50, 20]); } catch(e){}
+  }
+};
+window.Haptics = Haptics;
+
 function initTabs() {
-  const tabButtons = document.querySelectorAll('.nav-tab-btn');
+  const allTriggers = document.querySelectorAll('.nav-tab-btn, .bottom-nav-item, .chip-btn');
   const tabContents = document.querySelectorAll('.tab-content');
+  const bottomItems = document.querySelectorAll('.bottom-nav-item');
+  const topBtns = document.querySelectorAll('.nav-tab-btn');
+  const chipBtns = document.querySelectorAll('.chip-btn');
 
-  tabButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const targetId = btn.getAttribute('data-tab');
+  function activateTab(targetId) {
+    Haptics.selection();
 
-      tabButtons.forEach(b => b.classList.remove('active'));
-      tabContents.forEach(c => c.classList.remove('active'));
-
-      btn.classList.add('active');
-      const targetContent = document.getElementById(targetId);
-      if (targetContent) {
-        targetContent.classList.add('active');
-        // Render chart if opening tracker
-        if (targetId === 'tab-tracker') {
-          window.sleepTracker.renderSvgChart('sleep-chart-box');
-        }
+    // 1. Activate tab section
+    tabContents.forEach(c => c.classList.remove('active'));
+    const targetContent = document.getElementById(targetId);
+    if (targetContent) {
+      targetContent.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (targetId === 'tab-tracker' && window.sleepTracker) {
+        window.sleepTracker.renderSvgChart('sleep-chart-box');
       }
+    }
+
+    // 2. Sync Top Desktop Tabs
+    topBtns.forEach(b => {
+      b.classList.toggle('active', b.getAttribute('data-tab') === targetId);
+    });
+
+    // 3. Sync Companion Sub-chips
+    chipBtns.forEach(b => {
+      b.classList.toggle('active', b.getAttribute('data-tab') === targetId);
+    });
+
+    // 4. Map companion sub-tabs to primary bottom tabs
+    let primaryBottomTab = targetId;
+    if (targetId === 'tab-tracker') primaryBottomTab = 'tab-twin';
+    if (targetId === 'tab-nsdr') primaryBottomTab = 'tab-caffeine';
+    if (targetId === 'tab-cycles') primaryBottomTab = 'tab-sunrise';
+
+    bottomItems.forEach(b => {
+      b.classList.toggle('active', b.getAttribute('data-tab') === primaryBottomTab);
+    });
+  }
+
+  allTriggers.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const targetId = btn.getAttribute('data-tab');
+      if (targetId) activateTab(targetId);
     });
   });
 }
