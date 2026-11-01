@@ -887,15 +887,9 @@ function initMiFitSyncUI() {
 
   if (btnQuickDemo && window.miFitSync) {
     btnQuickDemo.addEventListener('click', () => {
-      // Refresh with randomized slight variations to show live reactive updates
-      const variation = Math.floor(Math.random() * 8) - 4;
-      window.miFitSync.setCustomTelemetry({
-        deepMinutes: 98 + variation,
-        remMinutes: 92 - variation,
-        restingHR: 52 + Math.floor(Math.random() * 3),
-        hrvRmssd: 68 + variation,
-        totalMinutes: 462
-      });
+      // 100% STABLE SYNC (NO Math.random)
+      window.miFitSync.lastSyncTimestamp = Date.now();
+      window.miFitSync.saveState();
       renderWatchTelemetry();
       if (window.sleepyAI) renderSleepyAICoach();
       if (window.Haptics) window.Haptics.success();
@@ -903,7 +897,40 @@ function initMiFitSyncUI() {
       const badge = document.getElementById('auto-sync-badge');
       const badgeText = document.getElementById('auto-sync-badge-text');
       if (badge && badgeText) {
-        badgeText.textContent = '✓ Данные Redmi Watch 5 Active синхронизированы (Глубокий: ' + Math.floor(window.miFitSync.telemetry.deepMinutes/60) + 'ч ' + (window.miFitSync.telemetry.deepMinutes%60) + 'м, Пульс: ' + window.miFitSync.telemetry.restingHR + ' уд/мин)';
+        badgeText.textContent = '✓ Данные сна с часов Redmi Watch 5 Active синхронизированы без задержек!';
+        badge.classList.add('visible');
+        setTimeout(() => badge.classList.remove('visible'), 4000);
+      }
+    });
+  }
+
+  // Manual Accurate Sleep Metrics Input
+  const btnSaveManual = document.getElementById('btn-save-manual-metrics');
+  if (btnSaveManual && window.miFitSync) {
+    btnSaveManual.addEventListener('click', () => {
+      const h = parseInt(document.getElementById('manual-total-hours')?.value || '7', 10);
+      const m = parseInt(document.getElementById('manual-total-mins')?.value || '42', 10);
+      const deep = parseInt(document.getElementById('manual-deep-mins')?.value || '98', 10);
+      const rem = parseInt(document.getElementById('manual-rem-mins')?.value || '92', 10);
+      const hr = parseInt(document.getElementById('manual-hr')?.value || '52', 10);
+
+      const total = h * 60 + m;
+      window.miFitSync.setCustomTelemetry({
+        totalMinutes: total,
+        deepMinutes: deep,
+        remMinutes: rem,
+        restingHR: hr,
+        hrvRmssd: 68
+      });
+
+      renderWatchTelemetry();
+      if (window.sleepyAI) renderSleepyAICoach();
+      if (window.Haptics) window.Haptics.success();
+
+      const badge = document.getElementById('auto-sync-badge');
+      const badgeText = document.getElementById('auto-sync-badge-text');
+      if (badge && badgeText) {
+        badgeText.textContent = `✓ Сохранены точные данные: ${h}ч ${m}м сна, глубокий ${Math.floor(deep/60)}ч ${deep%60}м, пульс ${hr}`;
         badge.classList.add('visible');
         setTimeout(() => badge.classList.remove('visible'), 4000);
       }

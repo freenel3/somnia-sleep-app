@@ -422,6 +422,40 @@
         </div>
       </div>
 
+      <!-- Manual Accurate Input Card (Zero Randomness) -->
+      <div class="content-card" style="background: linear-gradient(135deg, rgba(30, 27, 75, 0.4), rgba(15, 23, 42, 0.6)); border: 1px solid rgba(56, 189, 248, 0.3); padding: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div style="font-size: 14px; font-weight: 800; color: #FFFFFF;">✏️ Ввести точные данные с часов за ночь</div>
+          <span style="font-size: 10px; color: #10B981; background: rgba(16, 185, 129, 0.15); padding: 2px 8px; border-radius: 8px; font-weight: 700;">100% реальные данные</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div>
+            <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Всего сон (часы : мин)</label>
+            <div style="display: flex; gap: 6px;">
+              <input type="number" id="manual-total-hours" class="factor-input" value="7" min="0" max="24" style="width: 50%;" title="Часы">
+              <input type="number" id="manual-total-mins" class="factor-input" value="42" min="0" max="59" style="width: 50%;" title="Минуты">
+            </div>
+          </div>
+          <div>
+            <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Глубокий сон N3 (мин)</label>
+            <input type="number" id="manual-deep-mins" class="factor-input" value="98" min="0" max="300">
+          </div>
+          <div>
+            <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Быстрый сон REM (мин)</label>
+            <input type="number" id="manual-rem-mins" class="factor-input" value="92" min="0" max="300">
+          </div>
+          <div>
+            <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Пульс покоя (уд/мин)</label>
+            <input type="number" id="manual-hr" class="factor-input" value="52" min="35" max="150">
+          </div>
+        </div>
+
+        <button id="btn-save-manual-metrics" class="btn-autopilot" style="width: 100%; margin-top: 14px; padding: 12px; font-size: 13px; font-weight: 800; background: linear-gradient(135deg, #059669, #10B981);">
+          💾 Сохранить мои точные показатели
+        </button>
+      </div>
+
       <!-- Telemetry Bento Grid -->
       <div class="metrics-bento-grid">
         <div class="metric-bento-item">
