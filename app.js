@@ -14,6 +14,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initMelatoninShield();
   startClock();
   initArgonModules();
+  initTwinSubtabs();
+  initSleepyCourseUI();
+  initMiFitSyncUI();
+  initSleepyAICoachUI();
 });
 
 // =====================================================================
@@ -684,4 +688,326 @@ function initArgonModules() {
       try { if (document.fullscreenElement) document.exitFullscreen(); } catch(e) {}
     });
   }
+}
+
+// =====================================================================
+// 12. SLEEP SANCTUARY SUB-TABS (Overview, Course 30, AI 100%, Watch)
+// =====================================================================
+function initTwinSubtabs() {
+  const chipButtons = document.querySelectorAll('[data-twin-sub]');
+  const subpanels = document.querySelectorAll('.twin-subpanel');
+
+  chipButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetSub = btn.getAttribute('data-twin-sub');
+      if (window.Haptics) window.Haptics.selection();
+
+      chipButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      subpanels.forEach(p => {
+        p.style.display = (p.id === targetSub) ? (targetSub === 'sub-twin-course' ? 'flex' : 'flex') : 'none';
+      });
+
+      if (targetSub === 'sub-twin-course' && window.sleepyCourse) {
+        renderCourseUI();
+      } else if (targetSub === 'sub-twin-ai' && window.sleepyAI) {
+        renderSleepyAICoach();
+      } else if (targetSub === 'sub-twin-watch' && window.miFitSync) {
+        renderWatchTelemetry();
+      }
+    });
+  });
+}
+
+// =====================================================================
+// 13. SLEEPY 30-DAY COURSE CONTROLLER
+// =====================================================================
+function renderCourseUI() {
+  if (!window.sleepyCourse) return;
+  const course = window.sleepyCourse;
+  const stats = course.getProgressStats();
+
+  // 1. Header Stats
+  const badge = document.getElementById('course-progress-badge');
+  const bar = document.getElementById('course-bar-fill');
+  const completedText = document.getElementById('course-completed-text');
+  const percentText = document.getElementById('course-percent-text');
+
+  if (badge) badge.textContent = `День ${course.currentDay} / 30`;
+  if (bar) bar.style.width = `${Math.max(5, stats.percent)}%`;
+  if (completedText) completedText.textContent = `Завершено: ${stats.completed} из 30 дней`;
+  if (percentText) percentText.textContent = `${stats.percent}% пройдено`;
+
+  // 2. Days Strip
+  const strip = document.getElementById('days-scroll-strip');
+  if (strip) {
+    strip.innerHTML = '';
+    SLEEPY_COURSE_DATA.forEach(d => {
+      const chip = document.createElement('div');
+      chip.className = `day-chip ${course.currentDay === d.day ? 'active' : ''} ${course.completedDays.has(d.day) ? 'completed' : ''}`;
+      chip.innerHTML = `
+        <span style="font-size: 10px; font-weight: 700; opacity: 0.7;">Ф${d.phase}</span>
+        <span style="font-size: 14px; font-weight: 800;">${d.day}</span>
+        <span style="font-size: 9px;">${course.completedDays.has(d.day) ? '✓' : '•'}</span>
+      `;
+      chip.addEventListener('click', () => {
+        course.selectDay(d.day);
+        renderCourseUI();
+      });
+      strip.appendChild(chip);
+    });
+  }
+
+  // 3. Active Lesson Card
+  const activeDay = course.getDay(course.currentDay);
+  const phasePill = document.getElementById('lesson-phase-pill');
+  const dayNum = document.getElementById('lesson-day-number');
+  const title = document.getElementById('lesson-title');
+  const focus = document.getElementById('lesson-focus');
+  const task = document.getElementById('lesson-task');
+  const fact = document.getElementById('lesson-fact');
+  const hack = document.getElementById('lesson-hack');
+  const btnComplete = document.getElementById('btn-complete-day');
+
+  const phaseNames = {
+    1: 'Фаза 1: Стабилизация биоритмов',
+    2: 'Фаза 2: Архитектура глубокого сна',
+    3: 'Фаза 3: ВНС, HRV и торможение ЦНС',
+    4: 'Фаза 4: 100% Мастер сна'
+  };
+
+  if (phasePill) phasePill.textContent = phaseNames[activeDay.phase] || `Фаза ${activeDay.phase}`;
+  if (dayNum) dayNum.textContent = `День ${activeDay.day} из 30`;
+  if (title) title.textContent = activeDay.title;
+  if (focus) focus.textContent = `Фокус: ${activeDay.focus}`;
+  if (task) task.textContent = activeDay.task;
+  if (fact) fact.textContent = activeDay.fact;
+  if (hack) hack.textContent = activeDay.hack;
+
+  if (btnComplete) {
+    const isDone = course.completedDays.has(activeDay.day);
+    btnComplete.textContent = isDone ? '✓ День выполнен (Отметить еще раз)' : '✅ Отметить день как выполненный';
+    btnComplete.style.background = isDone ? 'linear-gradient(135deg, #059669, #10B981)' : '';
+  }
+}
+
+function initSleepyCourseUI() {
+  const btnComplete = document.getElementById('btn-complete-day');
+  if (btnComplete && window.sleepyCourse) {
+    btnComplete.addEventListener('click', () => {
+      window.sleepyCourse.completeDay(window.sleepyCourse.currentDay);
+      renderCourseUI();
+      // Also update Sleepy AI recommendations
+      if (window.sleepyAI) renderSleepyAICoach();
+    });
+  }
+}
+
+// =====================================================================
+// 14. MI FITNESS & REDMI WATCH CONTROLLER
+// =====================================================================
+function renderWatchTelemetry() {
+  if (!window.miFitSync) return;
+  const tel = window.miFitSync.telemetry;
+
+  const deepEl = document.getElementById('telemetry-deep');
+  const remEl = document.getElementById('telemetry-rem');
+  const hrEl = document.getElementById('telemetry-hr');
+  const hrvEl = document.getElementById('telemetry-hrv');
+  const latencyEl = document.getElementById('telemetry-latency');
+  const totalEl = document.getElementById('telemetry-total');
+  const deviceEl = document.getElementById('watch-device-name');
+
+  const formatHoursMin = (min) => {
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    return `${h}ч ${m}м`;
+  };
+
+  if (deepEl) deepEl.textContent = formatHoursMin(tel.deepMinutes);
+  if (remEl) remEl.textContent = formatHoursMin(tel.remMinutes);
+  if (hrEl) hrEl.textContent = `${tel.restingHR} уд/мин`;
+  if (hrvEl) hrvEl.textContent = `${tel.hrvRmssd} мс`;
+  if (latencyEl) latencyEl.textContent = `${tel.latencyMinutes} мин`;
+  if (totalEl) totalEl.textContent = formatHoursMin(tel.totalMinutes);
+  if (deviceEl) deviceEl.textContent = window.miFitSync.deviceName || 'Redmi Watch 5 Active';
+}
+
+function initMiFitSyncUI() {
+  const btnBle = document.getElementById('btn-ble-connect');
+  const fileUpload = document.getElementById('file-mifit-upload');
+  const btnQuickDemo = document.getElementById('btn-quick-sync-demo');
+
+  if (btnBle && window.miFitSync) {
+    btnBle.addEventListener('click', async () => {
+      try {
+        btnBle.textContent = '⏳ Поиск часов...';
+        const res = await window.miFitSync.connectBleWatch();
+        btnBle.textContent = `✓ ${res.deviceName}`;
+        renderWatchTelemetry();
+        if (window.sleepyAI) renderSleepyAICoach();
+      } catch (e) {
+        btnBle.textContent = '🔗 Bluetooth BLE';
+        alert('Bluetooth: ' + (e.message || 'Часы не найдены. Выберите экспорт файла или демо-синхронизацию.'));
+      }
+    });
+  }
+
+  if (fileUpload && window.miFitSync) {
+    fileUpload.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        await window.miFitSync.parseExportFile(file);
+        renderWatchTelemetry();
+        if (window.sleepyAI) renderSleepyAICoach();
+        alert(`✓ Файл ${file.name} успешно импортирован в Somnia! Телеметрия сна обновлена.`);
+      }
+    });
+  }
+
+  if (btnQuickDemo && window.miFitSync) {
+    btnQuickDemo.addEventListener('click', () => {
+      // Refresh with randomized slight variations to show live reactive updates
+      const variation = Math.floor(Math.random() * 8) - 4;
+      window.miFitSync.setCustomTelemetry({
+        deepMinutes: 98 + variation,
+        remMinutes: 92 - variation,
+        restingHR: 52 + Math.floor(Math.random() * 3),
+        hrvRmssd: 68 + variation,
+        totalMinutes: 462
+      });
+      renderWatchTelemetry();
+      if (window.sleepyAI) renderSleepyAICoach();
+      if (window.Haptics) window.Haptics.success();
+    });
+  }
+}
+
+// =====================================================================
+// 15. SLEEPY AI 100% COACH & CHAT CONTROLLER
+// =====================================================================
+function renderSleepyAICoach() {
+  if (!window.sleepyAI) return;
+  const tel = window.miFitSync ? window.miFitSync.telemetry : {};
+  const currentDay = window.sleepyCourse ? window.sleepyCourse.currentDay : 1;
+
+  const sqi = window.sleepyAI.calculateSQI(tel);
+  const roadmap = window.sleepyAI.getRoadmapTo100(tel, currentDay);
+  const gaps = window.sleepyAI.getGapAnalysis(tel, sqi);
+
+  // 1. SQI Display
+  const sqiEl = document.getElementById('sqi-big-display');
+  const forecastEl = document.getElementById('sqi-forecast-display');
+  if (sqiEl) sqiEl.textContent = `${sqi}%`;
+  if (forecastEl) forecastEl.textContent = `🔮 Прогноз на завтра: ${roadmap.forecastSqi}% при выполнении плана`;
+
+  // 2. 3 Steps Roadmap
+  const stepsContainer = document.getElementById('roadmap-steps-container');
+  if (stepsContainer) {
+    stepsContainer.innerHTML = '';
+    roadmap.steps.forEach((s, idx) => {
+      const card = document.createElement('div');
+      card.className = 'roadmap-step-card';
+      card.innerHTML = `
+        <div style="font-size: 11px; font-weight: 700; color: #38BDF8;">${s.tag}</div>
+        <div style="font-size: 14px; font-weight: 800; color: #FFFFFF;">Шаг ${idx + 1}: ${s.title}</div>
+        <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.4;">${s.desc}</div>
+      `;
+      stepsContainer.appendChild(card);
+    });
+  }
+
+  // 3. Gaps Analysis
+  const gapsContainer = document.getElementById('gaps-container');
+  if (gapsContainer) {
+    gapsContainer.innerHTML = '';
+    gaps.forEach(g => {
+      const card = document.createElement('div');
+      card.className = 'gap-item-card';
+      card.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 13px; font-weight: 800; color: #F43F5E;">⚠️ ${g.title}</span>
+          <span style="font-size: 11px; font-weight: 800; color: #F43F5E; background: rgba(244, 63, 94, 0.15); padding: 2px 8px; border-radius: 8px;">-${g.loss}</span>
+        </div>
+        <div style="font-size: 11px; color: var(--text-muted);">${g.cause}</div>
+        <div style="font-size: 12px; color: #F8FAFC; margin-top: 4px;"><b>Решение:</b> ${g.remedy}</div>
+      `;
+      gapsContainer.appendChild(card);
+    });
+  }
+
+  // 4. Chat Messages Render
+  renderChatMessages();
+}
+
+function renderChatMessages() {
+  const box = document.getElementById('chat-messages-box');
+  if (!box || !window.sleepyAI) return;
+  box.innerHTML = '';
+
+  window.sleepyAI.chatHistory.forEach(msg => {
+    const bubble = document.createElement('div');
+    bubble.className = `chat-bubble ${msg.sender}`;
+    bubble.textContent = msg.text;
+    box.appendChild(bubble);
+  });
+
+  box.scrollTop = box.scrollHeight;
+}
+
+function sendUserChatMessage(promptText) {
+  if (!promptText || !promptText.trim() || !window.sleepyAI) return;
+  if (window.Haptics) window.Haptics.light();
+
+  // 1. Add user message
+  window.sleepyAI.chatHistory.push({
+    sender: 'user',
+    text: promptText,
+    time: 'Сейчас'
+  });
+  renderChatMessages();
+
+  // 2. Generate Sleepy AI response
+  setTimeout(() => {
+    const aiResponse = window.sleepyAI.respondToPrompt(promptText);
+    window.sleepyAI.chatHistory.push({
+      sender: 'sleepy',
+      text: aiResponse,
+      time: 'Только что'
+    });
+    if (window.Haptics) window.Haptics.success();
+    renderChatMessages();
+  }, 350);
+}
+
+function initSleepyAICoachUI() {
+  const inputEl = document.getElementById('input-chat-sleepy');
+  const btnSend = document.getElementById('btn-send-sleepy');
+  const quickBtns = document.querySelectorAll('.quick-prompt-btn');
+
+  if (btnSend && inputEl) {
+    btnSend.addEventListener('click', () => {
+      const text = inputEl.value;
+      inputEl.value = '';
+      sendUserChatMessage(text);
+    });
+
+    inputEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const text = inputEl.value;
+        inputEl.value = '';
+        sendUserChatMessage(text);
+      }
+    });
+  }
+
+  quickBtns.forEach(b => {
+    b.addEventListener('click', () => {
+      const prompt = b.getAttribute('data-ask');
+      sendUserChatMessage(prompt);
+    });
+  });
+
+  renderSleepyAICoach();
 }

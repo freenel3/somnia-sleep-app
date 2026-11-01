@@ -3,7 +3,7 @@
  * Enables 100% offline functionality on mobile phones (Android / iOS).
  */
 
-const CACHE_NAME = 'somnia-pwa-v2';
+const CACHE_NAME = 'somnia-pwa-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -14,6 +14,9 @@ const ASSETS_TO_CACHE = [
   './argon-modules.js',
   './breathwork.js',
   './tracker.js',
+  './sleepy-course.js',
+  './mifit-sync.js',
+  './sleepy-ai.js',
   './app.js'
 ];
 
