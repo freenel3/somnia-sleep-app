@@ -94,6 +94,15 @@ function initTabs() {
     if (targetContent) {
       targetContent.classList.add('active');
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (targetId === 'tab-course' && window.sleepyCourse) {
+        renderCourseUI();
+      }
+      if (targetId === 'tab-ai' && window.sleepyAI) {
+        renderSleepyAICoach();
+      }
+      if (targetId === 'tab-watch' && window.miFitSync) {
+        renderWatchTelemetry();
+      }
       if (targetId === 'tab-tracker' && window.sleepTracker) {
         window.sleepTracker.renderSvgChart('sleep-chart-box');
       }
@@ -109,11 +118,13 @@ function initTabs() {
       b.classList.toggle('active', b.getAttribute('data-tab') === targetId);
     });
 
-    // 4. Map companion sub-tabs to primary bottom tabs
+    // 4. Map companion desktop sub-tabs to primary bottom 5 tabs
     let primaryBottomTab = targetId;
-    if (targetId === 'tab-tracker') primaryBottomTab = 'tab-twin';
-    if (targetId === 'tab-nsdr') primaryBottomTab = 'tab-caffeine';
-    if (targetId === 'tab-cycles') primaryBottomTab = 'tab-sunrise';
+    if (['tab-caffeine', 'tab-nsdr', 'tab-isochronic', 'tab-cycles', 'tab-tracker'].includes(targetId)) {
+      primaryBottomTab = 'tab-twin';
+    } else if (targetId === 'tab-sunrise') {
+      primaryBottomTab = 'tab-breath';
+    }
 
     bottomItems.forEach(b => {
       b.classList.toggle('active', b.getAttribute('data-tab') === primaryBottomTab);

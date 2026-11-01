@@ -47,88 +47,81 @@
     <!-- Bedside Digital Clock (Visible in Melatonin Shield Mode) -->
     <div id="shield-clock" class="shield-clock-display">00:00</div>
 
-    <!-- Hero Card: Night Autopilot -->
-    <section class="hero-card">
-      <div class="hero-header">
-        <div>
-          <div class="hero-subtitle">Нейро-Автопилот Засыпания</div>
-          <h1 class="hero-title">Идеальный Кокон Сна</h1>
-          <p class="hero-desc">
-            1 клик запускает научно обоснованную смесь: дельта-волны 2.0 Гц для торможения коры, теплый коричневый шум и шум дождя с плавным затуханием.
-          </p>
-        </div>
-      </div>
-
-      <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
-        <button id="btn-autopilot" class="btn-autopilot">
-          <span>🚀</span> Запустить Автопилот Сна
-        </button>
-
-        <div style="display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.3); padding: 8px 14px; border-radius: 12px; border: 1px solid var(--border-subtle);">
-          <span style="font-size: 13px; color: var(--text-secondary);">Таймер сна:</span>
-          <select id="select-timer" style="background: transparent; border: none; color: #FFF; font-weight: 700; font-size: 13px; outline: none; cursor: pointer;">
-            <option value="30" style="background: #0A0D18;">30 минут</option>
-            <option value="45" selected style="background: #0A0D18;">45 минут</option>
-            <option value="60" style="background: #0A0D18;">60 минут</option>
-            <option value="90" style="background: #0A0D18;">90 минут (1 цикл)</option>
-            <option value="0" style="background: #0A0D18;">Без таймера</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Sound Layers Mixer -->
-      <div class="sound-mixer-grid">
-        <div class="sound-track">
-          <div class="track-info">
-            <span>🌊 Коричневый шум</span>
-            <button class="track-toggle" data-track="brown">🔊</button>
-          </div>
-          <input type="range" id="slider-brown" class="slider-styled" min="0" max="1" step="0.05" value="0.45">
-        </div>
-
-        <div class="sound-track">
-          <div class="track-info">
-            <span>🌧️ Дождь за стеклом</span>
-            <button class="track-toggle" data-track="rain">🔊</button>
-          </div>
-          <input type="range" id="slider-rain" class="slider-styled" min="0" max="1" step="0.05" value="0.30">
-        </div>
-
-        <div class="sound-track">
-          <div class="track-info">
-            <span>🧠 Дельта-ритм (2.0 Гц)</span>
-            <button class="track-toggle" data-track="delta">🔊</button>
-          </div>
-          <input type="range" id="slider-delta" class="slider-styled" min="0" max="1" step="0.05" value="0.25">
-        </div>
-      </div>
-    </section>
-
-    <!-- Navigation Tabs -->
+    <!-- Navigation Tabs (Desktop & Full Screen) -->
     <nav class="nav-tabs">
-      <button class="nav-tab-btn active" data-tab="tab-twin">🔮 Sleep Twin</button>
+      <button class="nav-tab-btn active" data-tab="tab-twin">🌙 Сон & Микшер</button>
+      <button class="nav-tab-btn" data-tab="tab-course">🏆 Курс 30 Дней</button>
+      <button class="nav-tab-btn" data-tab="tab-ai">🤖 Слипи AI 100%</button>
+      <button class="nav-tab-btn" data-tab="tab-watch">⌚ Mi Fitness Часы</button>
+      <button class="nav-tab-btn" data-tab="tab-breath">🫁 Вагус-Дыхание</button>
       <button class="nav-tab-btn" data-tab="tab-caffeine">🧬 Аденозин (Argon)</button>
       <button class="nav-tab-btn" data-tab="tab-nsdr">🧘 NSDR Погружение</button>
-      <button class="nav-tab-btn" data-tab="tab-isochronic">🔊 Изохроны (Без наушников)</button>
+      <button class="nav-tab-btn" data-tab="tab-isochronic">🔊 Изохроны</button>
       <button class="nav-tab-btn" data-tab="tab-sunrise">🌅 Циркадный Рассвет</button>
-      <button class="nav-tab-btn" data-tab="tab-breath">🫁 Вагус-Дыхание</button>
       <button class="nav-tab-btn" data-tab="tab-cycles">⏱️ 90-мин Циклы</button>
       <button class="nav-tab-btn" data-tab="tab-tracker">🌌 Dream Studio</button>
     </nav>
 
-    <!-- TAB 1: SLEEP TWIN (AI PREDICTION) -->
+    <!-- TAB 1: SLEEP & AUTOPILOT COCOON -->
     <section id="tab-twin" class="tab-content active">
-        <!-- Sub-navigation Chips inside Sleep Sanctuary -->
-        <div class="sub-nav-chips">
-          <button class="chip-btn active" data-twin-sub="sub-twin-overview">🔮 Sleep Twin</button>
-          <button class="chip-btn" data-twin-sub="sub-twin-course">🏆 30 Дней Слипи</button>
-          <button class="chip-btn" data-twin-sub="sub-twin-ai">🤖 Слипи AI (100% Сон)</button>
-          <button class="chip-btn" data-twin-sub="sub-twin-watch">⌚ Mi Fitness Часы</button>
-          <button class="chip-btn" data-tab="tab-tracker">🌌 Dream Studio</button>
+      <!-- Hero Card: Night Autopilot & Audio Mixer -->
+      <div class="hero-card">
+        <div class="hero-header">
+          <div>
+            <div class="hero-subtitle">Нейро-Автопилот Засыпания</div>
+            <h1 class="hero-title">Идеальный Кокон Сна</h1>
+            <p class="hero-desc">
+              1 клик запускает научно обоснованную смесь: дельта-волны 2.0 Гц для торможения коры, теплый коричневый шум и шум дождя с плавным затуханием.
+            </p>
+          </div>
         </div>
 
-        <!-- SUB-PANEL 1: SLEEP TWIN PREDICTION (OVERVIEW) -->
-        <div id="sub-twin-overview" class="twin-subpanel" style="display: flex; flex-direction: column; gap: 20px;">
+        <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+          <button id="btn-autopilot" class="btn-autopilot">
+            <span>🚀</span> Запустить Автопилот Сна
+          </button>
+
+          <div style="display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.3); padding: 8px 14px; border-radius: 12px; border: 1px solid var(--border-subtle);">
+            <span style="font-size: 13px; color: var(--text-secondary);">Таймер сна:</span>
+            <select id="select-timer" style="background: transparent; border: none; color: #FFF; font-weight: 700; font-size: 13px; outline: none; cursor: pointer;">
+              <option value="30" style="background: #0A0D18;">30 минут</option>
+              <option value="45" selected style="background: #0A0D18;">45 минут</option>
+              <option value="60" style="background: #0A0D18;">60 минут</option>
+              <option value="90" style="background: #0A0D18;">90 минут (1 цикл)</option>
+              <option value="0" style="background: #0A0D18;">Без таймера</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Sound Layers Mixer -->
+        <div class="sound-mixer-grid">
+          <div class="sound-track">
+            <div class="track-info">
+              <span>🌊 Коричневый шум</span>
+              <button class="track-toggle" data-track="brown">🔊</button>
+            </div>
+            <input type="range" id="slider-brown" class="slider-styled" min="0" max="1" step="0.05" value="0.45">
+          </div>
+
+          <div class="sound-track">
+            <div class="track-info">
+              <span>🌧️ Дождь за стеклом</span>
+              <button class="track-toggle" data-track="rain">🔊</button>
+            </div>
+            <input type="range" id="slider-rain" class="slider-styled" min="0" max="1" step="0.05" value="0.30">
+          </div>
+
+          <div class="sound-track">
+            <div class="track-info">
+              <span>🧠 Дельта-ритм (2.0 Гц)</span>
+              <button class="track-toggle" data-track="delta">🔊</button>
+            </div>
+            <input type="range" id="slider-delta" class="slider-styled" min="0" max="1" step="0.05" value="0.25">
+          </div>
+        </div>
+      </div>
+
+      <!-- Content Card: Sleep Twin -->
       <div class="content-card">
         <div class="card-title-row">
           <h2 class="card-title">🔮 Цифровой Двойник Сна (Sleep Twin)</h2>
@@ -172,243 +165,240 @@
           </div>
         </div>
       </div>
-      <!-- END SUB-PANEL 1 -->
-
-      <!-- SUB-PANEL 2: 30-DAY SLEEPY COURSE (КУРС СЛИПИ 30 ДНЕЙ) -->
-      <div id="sub-twin-course" class="twin-subpanel course-hub" style="display: none;">
-        <div class="course-progress-header">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-              <div style="font-size: 11px; color: var(--accent-cyan); font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Научный курс CBT-I & Биохакинг</div>
-              <h2 style="font-size: 20px; font-weight: 800; color: #FFFFFF; margin-top: 2px;">🏆 Курс «Слипи 30 Дней»</h2>
-            </div>
-            <div id="course-progress-badge" style="font-size: 14px; font-weight: 800; color: #38BDF8; background: rgba(56, 189, 248, 0.15); padding: 6px 14px; border-radius: 14px; border: 1px solid rgba(56, 189, 248, 0.3);">
-              День 1 / 30
-            </div>
-          </div>
-
-          <div class="course-bar-track">
-            <div id="course-bar-fill" class="course-bar-fill" style="width: 3.3%;"></div>
-          </div>
-          <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary);">
-            <span id="course-completed-text">Завершено: 1 из 30 дней</span>
-            <span id="course-percent-text">3% пройдено</span>
-          </div>
-
-          <!-- 30 Days Horizontal Scroll Strip -->
-          <div style="margin-top: 14px; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Выбор дня курса:</div>
-          <div id="days-scroll-strip" class="days-scroll-strip">
-            <!-- Dynamically populated from 1 to 30 -->
-          </div>
-        </div>
-
-        <!-- Active Day Card -->
-        <div class="day-lesson-card">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span id="lesson-phase-pill" class="phase-pill">Фаза 1: Стабилизация</span>
-            <span id="lesson-day-number" style="font-size: 12px; color: var(--text-muted); font-weight: 700;">День 1</span>
-          </div>
-
-          <h3 id="lesson-title" style="font-size: 20px; font-weight: 800; color: #FFFFFF; line-height: 1.3;">
-            Два вечерних будильника
-          </h3>
-          <div id="lesson-focus" style="font-size: 12px; color: var(--accent-cyan); font-weight: 600;">
-            Фокус: Режим и защита от срыва
-          </div>
-
-          <div style="background: rgba(255, 255, 255, 0.04); border-left: 3px solid #38BDF8; padding: 12px 16px; border-radius: 8px;">
-            <div style="font-size: 11px; color: var(--accent-cyan); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">🎯 Твое микрозадание на сегодня:</div>
-            <div id="lesson-task" style="font-size: 13px; color: #F8FAFC; line-height: 1.5;">
-              Установи 2 будильника: предупреждающий (за 1.5ч) и основной (за 1ч до сна). После звонка сделай паузу на 30 сек.
-            </div>
-          </div>
-
-          <div style="background: rgba(99, 102, 241, 0.08); border-left: 3px solid #818CF8; padding: 12px 16px; border-radius: 8px;">
-            <div style="font-size: 11px; color: #818CF8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">🔬 Научный факт:</div>
-            <div id="lesson-fact" style="font-size: 12px; color: var(--text-secondary); line-height: 1.5;">
-              Дисциплинированная реакция на сигнал сна защищает от срыва режима на 80%. Гормональный переход занимает 60-90 минут.
-            </div>
-          </div>
-
-          <div style="background: rgba(245, 158, 11, 0.08); border-left: 3px solid #F59E0B; padding: 12px 16px; border-radius: 8px;">
-            <div style="font-size: 11px; color: #F59E0B; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">⚡ Лайфхак для ночных смен:</div>
-            <div id="lesson-hack" style="font-size: 12px; color: var(--text-secondary); line-height: 1.5;">
-              Будильники ставятся динамически в зависимости от времени окончания ночной смены.
-            </div>
-          </div>
-
-          <button id="btn-complete-day" class="btn-autopilot" style="margin-top: 8px; width: 100%;">
-            ✅ Отметить день как выполненный
-          </button>
-        </div>
-      </div>
-      <!-- END SUB-PANEL 2 -->
-
-      <!-- SUB-PANEL 3: SLEEPY AI 100% COACH (ИИ-ПОМОЩНИК НА 100%) -->
-      <div id="sub-twin-ai" class="twin-subpanel" style="display: none; flex-direction: column; gap: 18px;">
-        <!-- SQI Score Hero -->
-        <div class="sqi-score-box">
-          <div style="font-size: 11px; color: var(--accent-cyan); font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;">Somnia Sleep Quality Index</div>
-          <div id="sqi-big-display" class="sqi-big-number">88%</div>
-          <div style="font-size: 14px; font-weight: 700; color: #FFFFFF;">
-            🎯 Цель: <span style="color: #38BDF8;">100% Восстановление</span>
-          </div>
-          <div id="sqi-forecast-display" style="font-size: 12px; color: #10B981; background: rgba(16, 185, 129, 0.15); padding: 4px 12px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.3);">
-            🔮 Прогноз на следующую ночь: 96% при соблюдении плана
-          </div>
-        </div>
-
-        <!-- 3-Step Daily Recipe to 100% -->
-        <div class="content-card">
-          <h3 style="font-size: 17px; font-weight: 800; color: #FFFFFF; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-            <span>🚀</span> Твой персональный план выхода на 100% сна:
-          </h3>
-          <div id="roadmap-steps-container" style="display: flex; flex-direction: column; gap: 10px;">
-            <!-- Rendered by SleepyAI -->
-          </div>
-        </div>
-
-        <!-- Gap Analysis: Where Points are Lost -->
-        <div class="content-card">
-          <h3 style="font-size: 16px; font-weight: 800; color: #FFFFFF; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
-            <span>🔍</span> Диагностика дефицитов: почему не 100%?
-          </h3>
-          <div id="gaps-container">
-            <!-- Rendered by SleepyAI -->
-          </div>
-        </div>
-
-        <!-- Conversational Sleepy AI Chat -->
-        <div class="ai-chat-card">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="font-size: 22px;">🤖</span>
-              <div>
-                <div style="font-size: 15px; font-weight: 800; color: #FFFFFF;">Слипи AI Наставник</div>
-                <div style="font-size: 11px; color: #10B981;">● Онлайн • Знает весь 30-дневный курс</div>
-              </div>
-            </div>
-            <span style="font-size: 10px; color: var(--accent-cyan); background: rgba(56, 189, 248, 0.15); padding: 3px 8px; border-radius: 8px;">2026 Pro</span>
-          </div>
-
-          <div id="chat-messages-box" class="chat-history-box">
-            <!-- Messages inserted here -->
-          </div>
-
-          <!-- Quick Prompts -->
-          <div class="quick-prompts-row">
-            <button class="quick-prompt-btn" data-ask="Как мне наладить сон на 100%?">🎯 Как наладить сон на 100%?</button>
-            <button class="quick-prompt-btn" data-ask="Не могу уснуть, кручусь в постели">🌙 Не могу уснуть</button>
-            <button class="quick-prompt-btn" data-ask="Что делать после ночной смены?">🕶 После ночной смены</button>
-            <button class="quick-prompt-btn" data-ask="Когда жесткий стоп кофеину?">☕ Стоп кофеину</button>
-            <button class="quick-prompt-btn" data-ask="Как поднять фазу глубокого сна?">🧬 Поднять глубокий сон</button>
-          </div>
-
-          <div class="chat-input-row">
-            <input type="text" id="input-chat-sleepy" class="chat-input-field" placeholder="Спроси Слипи о сне, часах или кофе...">
-            <button id="btn-send-sleepy" class="btn-autopilot" style="padding: 10px 18px; font-size: 13px;">
-              Отправить
-            </button>
-          </div>
-        </div>
-      </div>
-      <!-- END SUB-PANEL 3 -->
-
-      <!-- SUB-PANEL 4: MI FITNESS & REDMI WATCH 5 ACTIVE (СИНХРОНИЗАЦИЯ ЧАСОВ) -->
-      <div id="sub-twin-watch" class="twin-subpanel" style="display: none; flex-direction: column; gap: 18px;">
-        <div class="watch-card">
-          <div class="watch-status-row">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <div style="font-size: 28px;">⌚</div>
-              <div>
-                <div id="watch-device-name" style="font-size: 17px; font-weight: 800; color: #FFFFFF;">Redmi Watch 5 Active</div>
-                <div style="font-size: 12px; color: var(--text-secondary);">
-                  <span class="watch-live-dot"></span>Синхронизация Mi Fitness / HyperOS
-                </div>
-              </div>
-            </div>
-            <span id="watch-sync-time" style="font-size: 11px; color: var(--accent-cyan); background: rgba(56, 189, 248, 0.12); padding: 4px 10px; border-radius: 10px;">
-              Синхронизировано
-            </span>
-          </div>
-
-          <!-- Auto-Sync Zero-Click Toggle Card -->
-          <div class="auto-sync-toggle-card">
-            <div>
-              <div style="font-size: 13.5px; font-weight: 700; color: #FFFFFF;">⚡ Авто-синхронизация (Zero-Click)</div>
-              <div style="font-size: 11px; color: var(--text-secondary);">Автоматически считывать сон с часов Redmi каждое утро</div>
-            </div>
-            <label class="switch-control">
-              <input type="checkbox" id="toggle-mifit-autosync" checked>
-              <span class="switch-slider"></span>
-            </label>
-          </div>
-
-          <!-- Health Connect Background Link Guide -->
-          <div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 14px; padding: 12px 14px; font-size: 11px; color: var(--text-secondary); line-height: 1.5;">
-            <div style="font-weight: 700; color: #818CF8; margin-bottom: 2px;">💡 100% фоновая передача в Android:</div>
-            В <b>Mi Fitness</b>: Профиль → «Сторонние службы» → <b>Health Connect</b> → Включить запись сна. Часы сбрасывают сон в систему, а SOMNIA подхватывает его автоматически!
-          </div>
-
-          <!-- Connection & Import Actions -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px;">
-            <button id="btn-ble-connect" class="chip-btn" style="justify-content: center; background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.4); color: #38BDF8; font-weight: 700; padding: 12px 10px;">
-              🔗 Bluetooth BLE
-            </button>
-            <label class="chip-btn" style="justify-content: center; background: rgba(129, 140, 248, 0.15); border-color: rgba(129, 140, 248, 0.4); color: #818CF8; font-weight: 700; padding: 12px 10px; cursor: pointer;">
-              📂 Импорт файла
-              <input type="file" id="file-mifit-upload" accept=".json,.csv,.txt" style="display: none;">
-            </label>
-          </div>
-
-          <button id="btn-quick-sync-demo" class="btn-autopilot" style="width: 100%; padding: 12px; font-size: 13px;">
-            ⚡ Обновить телеметрию сна с часов
-          </button>
-        </div>
-
-        <!-- Telemetry Bento Grid -->
-        <div class="metrics-bento-grid">
-          <div class="metric-bento-item">
-            <span class="metric-bento-label">🧠 Глубокий сон (N3)</span>
-            <span id="telemetry-deep" class="metric-bento-val" style="color: #38BDF8;">1ч 38м</span>
-            <span style="font-size: 10px; color: #10B981;">21.2% • Идеальный оптимум</span>
-          </div>
-
-          <div class="metric-bento-item">
-            <span class="metric-bento-label">🌌 Быстрый сон (REM)</span>
-            <span id="telemetry-rem" class="metric-bento-val" style="color: #A855F7;">1ч 32м</span>
-            <span style="font-size: 10px; color: #10B981;">19.9% • Восстановление ЦНС</span>
-          </div>
-
-          <div class="metric-bento-item">
-            <span class="metric-bento-label">❤️ Ночной пульс покоя</span>
-            <span id="telemetry-hr" class="metric-bento-val" style="color: #F43F5E;">52 уд/мин</span>
-            <span style="font-size: 10px; color: #10B981;">Dipping -14% (Здоровое падение)</span>
-          </div>
-
-          <div class="metric-bento-item">
-            <span class="metric-bento-label">⚡ Вариабельность HRV</span>
-            <span id="telemetry-hrv" class="metric-bento-val" style="color: #10B981;">68 мс</span>
-            <span style="font-size: 10px; color: #10B981;">Парасимпатика в норме</span>
-          </div>
-
-          <div class="metric-bento-item">
-            <span class="metric-bento-label">⏱️ Время засыпания</span>
-            <span id="telemetry-latency" class="metric-bento-val">14 мин</span>
-            <span style="font-size: 10px; color: #10B981;">В пределах нормы (10-20м)</span>
-          </div>
-
-          <div class="metric-bento-item">
-            <span class="metric-bento-label">📊 Всего сон</span>
-            <span id="telemetry-total" class="metric-bento-val">7ч 42м</span>
-            <span style="font-size: 10px; color: #38BDF8;">5 полных циклов (90м)</span>
-          </div>
-        </div>
-      </div>
-      <!-- END SUB-PANEL 4 -->
     </section>
 
-    <!-- TAB 2: BREATHWORK (VAGUS ACTIVATOR) -->
+    <!-- TAB 2: 30-DAY SLEEPY COURSE -->
+    <section id="tab-course" class="tab-content course-hub">
+      <div class="course-progress-header">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 11px; color: var(--accent-cyan); font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Научный курс CBT-I & Биохакинг</div>
+            <h2 style="font-size: 20px; font-weight: 800; color: #FFFFFF; margin-top: 2px;">🏆 Курс «Слипи 30 Дней»</h2>
+          </div>
+          <div id="course-progress-badge" style="font-size: 14px; font-weight: 800; color: #38BDF8; background: rgba(56, 189, 248, 0.15); padding: 6px 14px; border-radius: 14px; border: 1px solid rgba(56, 189, 248, 0.3);">
+            День 1 / 30
+          </div>
+        </div>
+
+        <div class="course-bar-track">
+          <div id="course-bar-fill" class="course-bar-fill" style="width: 3.3%;"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary);">
+          <span id="course-completed-text">Завершено: 1 из 30 дней</span>
+          <span id="course-percent-text">3% пройдено</span>
+        </div>
+
+        <!-- 30 Days Horizontal Scroll Strip -->
+        <div style="margin-top: 14px; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Выбор дня курса:</div>
+        <div id="days-scroll-strip" class="days-scroll-strip">
+          <!-- Dynamically populated from 1 to 30 -->
+        </div>
+      </div>
+
+      <!-- Active Day Card -->
+      <div class="day-lesson-card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span id="lesson-phase-pill" class="phase-pill">Фаза 1: Стабилизация</span>
+          <span id="lesson-day-number" style="font-size: 12px; color: var(--text-muted); font-weight: 700;">День 1</span>
+        </div>
+
+        <h3 id="lesson-title" style="font-size: 20px; font-weight: 800; color: #FFFFFF; line-height: 1.3;">
+          Два вечерних будильника
+        </h3>
+        <div id="lesson-focus" style="font-size: 12px; color: var(--accent-cyan); font-weight: 600;">
+          Фокус: Режим и защита от срыва
+        </div>
+
+        <div style="background: rgba(255, 255, 255, 0.04); border-left: 3px solid #38BDF8; padding: 12px 16px; border-radius: 8px;">
+          <div style="font-size: 11px; color: var(--accent-cyan); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">🎯 Твое микрозадание на сегодня:</div>
+          <div id="lesson-task" style="font-size: 13px; color: #F8FAFC; line-height: 1.5;">
+            Установи 2 будильника: предупреждающий (за 1.5ч) и основной (за 1ч до сна). После звонка сделай паузу на 30 сек.
+          </div>
+        </div>
+
+        <div style="background: rgba(99, 102, 241, 0.08); border-left: 3px solid #818CF8; padding: 12px 16px; border-radius: 8px;">
+          <div style="font-size: 11px; color: #818CF8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">🔬 Научный факт:</div>
+          <div id="lesson-fact" style="font-size: 12px; color: var(--text-secondary); line-height: 1.5;">
+            Дисциплинированная реакция на сигнал сна защищает от срыва режима на 80%. Гормональный переход занимает 60-90 минут.
+          </div>
+        </div>
+
+        <div style="background: rgba(245, 158, 11, 0.08); border-left: 3px solid #F59E0B; padding: 12px 16px; border-radius: 8px;">
+          <div style="font-size: 11px; color: #F59E0B; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">⚡ Лайфхак для ночных смен:</div>
+          <div id="lesson-hack" style="font-size: 12px; color: var(--text-secondary); line-height: 1.5;">
+            Будильники ставятся динамически в зависимости от времени окончания ночной смены.
+          </div>
+        </div>
+
+        <button id="btn-complete-day" class="btn-autopilot" style="margin-top: 8px; width: 100%;">
+          ✅ Отметить день как выполненный
+        </button>
+      </div>
+    </section>
+
+    <!-- TAB 3: SLEEPY AI 100% COACH -->
+    <section id="tab-ai" class="tab-content" style="gap: 18px;">
+      <!-- SQI Score Hero -->
+      <div class="sqi-score-box">
+        <div style="font-size: 11px; color: var(--accent-cyan); font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;">Somnia Sleep Quality Index</div>
+        <div id="sqi-big-display" class="sqi-big-number">88%</div>
+        <div style="font-size: 14px; font-weight: 700; color: #FFFFFF;">
+          🎯 Цель: <span style="color: #38BDF8;">100% Восстановление</span>
+        </div>
+        <div id="sqi-forecast-display" style="font-size: 12px; color: #10B981; background: rgba(16, 185, 129, 0.15); padding: 4px 12px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.3);">
+          🔮 Прогноз на следующую ночь: 96% при соблюдении плана
+        </div>
+      </div>
+
+      <!-- 3-Step Daily Recipe to 100% -->
+      <div class="content-card">
+        <h3 style="font-size: 17px; font-weight: 800; color: #FFFFFF; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+          <span>🚀</span> Твой персональный план выхода на 100% сна:
+        </h3>
+        <div id="roadmap-steps-container" style="display: flex; flex-direction: column; gap: 10px;">
+          <!-- Rendered by SleepyAI -->
+        </div>
+      </div>
+
+      <!-- Gap Analysis: Where Points are Lost -->
+      <div class="content-card">
+        <h3 style="font-size: 16px; font-weight: 800; color: #FFFFFF; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+          <span>🔍</span> Диагностика дефицитов: почему не 100%?
+        </h3>
+        <div id="gaps-container">
+          <!-- Rendered by SleepyAI -->
+        </div>
+      </div>
+
+      <!-- Conversational Sleepy AI Chat -->
+      <div class="ai-chat-card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 22px;">🤖</span>
+            <div>
+              <div style="font-size: 15px; font-weight: 800; color: #FFFFFF;">Слипи AI Наставник</div>
+              <div style="font-size: 11px; color: #10B981;">● Онлайн • Знает весь 30-дневный курс</div>
+            </div>
+          </div>
+          <span style="font-size: 10px; color: var(--accent-cyan); background: rgba(56, 189, 248, 0.15); padding: 3px 8px; border-radius: 8px;">2026 Pro</span>
+        </div>
+
+        <div id="chat-messages-box" class="chat-history-box">
+          <!-- Messages inserted here -->
+        </div>
+
+        <!-- Quick Prompts -->
+        <div class="quick-prompts-row">
+          <button class="quick-prompt-btn" data-ask="Как мне наладить сон на 100%?">🎯 Как наладить сон на 100%?</button>
+          <button class="quick-prompt-btn" data-ask="Не могу уснуть, кручусь в постели">🌙 Не могу уснуть</button>
+          <button class="quick-prompt-btn" data-ask="Что делать после ночной смены?">🕶 После ночной смены</button>
+          <button class="quick-prompt-btn" data-ask="Когда жесткий стоп кофеину?">☕ Стоп кофеину</button>
+          <button class="quick-prompt-btn" data-ask="Как поднять фазу глубокого сна?">🧬 Поднять глубокий сон</button>
+        </div>
+
+        <div class="chat-input-row">
+          <input type="text" id="input-chat-sleepy" class="chat-input-field" placeholder="Спроси Слипи о сне, часах или кофе...">
+          <button id="btn-send-sleepy" class="btn-autopilot" style="padding: 10px 18px; font-size: 13px;">
+            Отправить
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: MI FITNESS & REDMI WATCH 5 ACTIVE -->
+    <section id="tab-watch" class="tab-content" style="gap: 18px;">
+      <div class="watch-card">
+        <div class="watch-status-row">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="font-size: 28px;">⌚</div>
+            <div>
+              <div id="watch-device-name" style="font-size: 17px; font-weight: 800; color: #FFFFFF;">Redmi Watch 5 Active</div>
+              <div style="font-size: 12px; color: var(--text-secondary);">
+                <span class="watch-live-dot"></span>Синхронизация Mi Fitness / HyperOS
+              </div>
+            </div>
+          </div>
+          <span id="watch-sync-time" style="font-size: 11px; color: var(--accent-cyan); background: rgba(56, 189, 248, 0.12); padding: 4px 10px; border-radius: 10px;">
+            Синхронизировано
+          </span>
+        </div>
+
+        <!-- Auto-Sync Zero-Click Toggle Card -->
+        <div class="auto-sync-toggle-card">
+          <div>
+            <div style="font-size: 13.5px; font-weight: 700; color: #FFFFFF;">⚡ Авто-синхронизация (Zero-Click)</div>
+            <div style="font-size: 11px; color: var(--text-secondary);">Автоматически считывать сон с часов Redmi каждое утро</div>
+          </div>
+          <label class="switch-control">
+            <input type="checkbox" id="toggle-mifit-autosync" checked>
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+
+        <!-- Health Connect Background Link Guide -->
+        <div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 14px; padding: 12px 14px; font-size: 11px; color: var(--text-secondary); line-height: 1.5;">
+          <div style="font-weight: 700; color: #818CF8; margin-bottom: 2px;">💡 100% фоновая передача в Android:</div>
+          В <b>Mi Fitness</b>: Профиль → «Сторонние службы» → <b>Health Connect</b> → Включить запись сна. Часы сбрасывают сон в систему, а SOMNIA подхватывает его автоматически!
+        </div>
+
+        <!-- Connection & Import Actions -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px;">
+          <button id="btn-ble-connect" class="chip-btn" style="justify-content: center; background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.4); color: #38BDF8; font-weight: 700; padding: 12px 10px;">
+            🔗 Bluetooth BLE
+          </button>
+          <label class="chip-btn" style="justify-content: center; background: rgba(129, 140, 248, 0.15); border-color: rgba(129, 140, 248, 0.4); color: #818CF8; font-weight: 700; padding: 12px 10px; cursor: pointer;">
+            📂 Импорт файла
+            <input type="file" id="file-mifit-upload" accept=".json,.csv,.txt" style="display: none;">
+          </label>
+        </div>
+
+        <button id="btn-quick-sync-demo" class="btn-autopilot" style="width: 100%; padding: 12px; font-size: 13px;">
+          ⚡ Обновить телеметрию сна с часов
+        </button>
+      </div>
+
+      <!-- Telemetry Bento Grid -->
+      <div class="metrics-bento-grid">
+        <div class="metric-bento-item">
+          <span class="metric-bento-label">🧠 Глубокий сон (N3)</span>
+          <span id="telemetry-deep" class="metric-bento-val" style="color: #38BDF8;">1ч 38м</span>
+          <span style="font-size: 10px; color: #10B981;">21.2% • Идеальный оптимум</span>
+        </div>
+
+        <div class="metric-bento-item">
+          <span class="metric-bento-label">🌌 Быстрый сон (REM)</span>
+          <span id="telemetry-rem" class="metric-bento-val" style="color: #A855F7;">1ч 32м</span>
+          <span style="font-size: 10px; color: #10B981;">19.9% • Восстановление ЦНС</span>
+        </div>
+
+        <div class="metric-bento-item">
+          <span class="metric-bento-label">❤️ Ночной пульс покоя</span>
+          <span id="telemetry-hr" class="metric-bento-val" style="color: #F43F5E;">52 уд/мин</span>
+          <span style="font-size: 10px; color: #10B981;">Dipping -14% (Здоровое падение)</span>
+        </div>
+
+        <div class="metric-bento-item">
+          <span class="metric-bento-label">⚡ Вариабельность HRV</span>
+          <span id="telemetry-hrv" class="metric-bento-val" style="color: #10B981;">68 мс</span>
+          <span style="font-size: 10px; color: #10B981;">Парасимпатика в норме</span>
+        </div>
+
+        <div class="metric-bento-item">
+          <span class="metric-bento-label">⏱️ Время засыпания</span>
+          <span id="telemetry-latency" class="metric-bento-val">14 мин</span>
+          <span style="font-size: 10px; color: #10B981;">В пределах нормы (10-20м)</span>
+        </div>
+
+        <div class="metric-bento-item">
+          <span class="metric-bento-label">📊 Всего сон</span>
+          <span id="telemetry-total" class="metric-bento-val">7ч 42м</span>
+          <span style="font-size: 10px; color: #38BDF8;">5 полных циклов (90м)</span>
+        </div>
+      </div>
+    </section>
+
+    
+<!-- TAB 2: BREATHWORK (VAGUS ACTIVATOR) -->
     <section id="tab-breath" class="tab-content">
       <div class="content-card">
         <div class="card-title-row">
@@ -813,24 +803,24 @@
       <span class="bottom-nav-label">Сон</span>
       <span class="active-dot"></span>
     </button>
+    <button class="bottom-nav-item" data-tab="tab-course">
+      <span class="bottom-nav-icon">🏆</span>
+      <span class="bottom-nav-label">Курс 30</span>
+      <span class="active-dot"></span>
+    </button>
+    <button class="bottom-nav-item" data-tab="tab-ai">
+      <span class="bottom-nav-icon">🤖</span>
+      <span class="bottom-nav-label">ИИ 100%</span>
+      <span class="active-dot"></span>
+    </button>
+    <button class="bottom-nav-item" data-tab="tab-watch">
+      <span class="bottom-nav-icon">⌚</span>
+      <span class="bottom-nav-label">Часы</span>
+      <span class="active-dot"></span>
+    </button>
     <button class="bottom-nav-item" data-tab="tab-breath">
       <span class="bottom-nav-icon">🫁</span>
       <span class="bottom-nav-label">Вагус</span>
-      <span class="active-dot"></span>
-    </button>
-    <button class="bottom-nav-item" data-tab="tab-caffeine">
-      <span class="bottom-nav-icon">🧬</span>
-      <span class="bottom-nav-label">Нейро</span>
-      <span class="active-dot"></span>
-    </button>
-    <button class="bottom-nav-item" data-tab="tab-isochronic">
-      <span class="bottom-nav-icon">🔊</span>
-      <span class="bottom-nav-label">Звук</span>
-      <span class="active-dot"></span>
-    </button>
-    <button class="bottom-nav-item" data-tab="tab-sunrise">
-      <span class="bottom-nav-icon">🌅</span>
-      <span class="bottom-nav-label">Рассвет</span>
       <span class="active-dot"></span>
     </button>
   </nav>
