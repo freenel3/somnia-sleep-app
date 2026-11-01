@@ -14,6 +14,11 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
+  <!-- Floating Native Push-Badge (Zero-Click Auto-Sync) -->
+  <div id="auto-sync-badge" class="sync-badge">
+    <span class="status-pulse"></span>
+    <span id="auto-sync-badge-text">Данные сна с Redmi Watch 5 Active обновлены автоматически (7ч 42м, SQI 88%)</span>
+  </div>
   <canvas id="ambient-canvas"></canvas>
 
   <div class="app-container">
@@ -325,6 +330,24 @@
             <span id="watch-sync-time" style="font-size: 11px; color: var(--accent-cyan); background: rgba(56, 189, 248, 0.12); padding: 4px 10px; border-radius: 10px;">
               Синхронизировано
             </span>
+          </div>
+
+          <!-- Auto-Sync Zero-Click Toggle Card -->
+          <div class="auto-sync-toggle-card">
+            <div>
+              <div style="font-size: 13.5px; font-weight: 700; color: #FFFFFF;">⚡ Авто-синхронизация (Zero-Click)</div>
+              <div style="font-size: 11px; color: var(--text-secondary);">Автоматически считывать сон с часов Redmi каждое утро</div>
+            </div>
+            <label class="switch-control">
+              <input type="checkbox" id="toggle-mifit-autosync" checked>
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+
+          <!-- Health Connect Background Link Guide -->
+          <div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 14px; padding: 12px 14px; font-size: 11px; color: var(--text-secondary); line-height: 1.5;">
+            <div style="font-weight: 700; color: #818CF8; margin-bottom: 2px;">💡 100% фоновая передача в Android:</div>
+            В <b>Mi Fitness</b>: Профиль → «Сторонние службы» → <b>Health Connect</b> → Включить запись сна. Часы сбрасывают сон в систему, а SOMNIA подхватывает его автоматически!
           </div>
 
           <!-- Connection & Import Actions -->

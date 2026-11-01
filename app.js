@@ -836,6 +836,14 @@ function renderWatchTelemetry() {
 
 function initMiFitSyncUI() {
   const btnBle = document.getElementById('btn-ble-connect');
+  const toggleAutoSync = document.getElementById('toggle-mifit-autosync');
+
+  if (toggleAutoSync && window.miFitSync) {
+    toggleAutoSync.checked = window.miFitSync.autoSyncEnabled;
+    toggleAutoSync.addEventListener('change', (e) => {
+      window.miFitSync.setAutoSyncEnabled(e.target.checked);
+    });
+  }
   const fileUpload = document.getElementById('file-mifit-upload');
   const btnQuickDemo = document.getElementById('btn-quick-sync-demo');
 
@@ -882,6 +890,20 @@ function initMiFitSyncUI() {
       if (window.Haptics) window.Haptics.success();
     });
   }
+
+  // Trigger Zero-Click Auto-Sync on Launch (1 sec after render)
+  setTimeout(() => {
+    if (window.miFitSync) {
+      window.miFitSync.evaluateAutoSyncOnLaunch();
+    }
+  }, 1000);
+
+  // Trigger Zero-Click Auto-Sync when returning to the app from Mi Fitness
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && window.miFitSync) {
+      window.miFitSync.evaluateAutoSyncOnLaunch();
+    }
+  });
 }
 
 // =====================================================================
