@@ -339,6 +339,12 @@ class SomniaSunriseEngine {
         this.isRunning = false;
         this.timer = null;
         this.overlay = null;
+        this.maxKelvin = 10000; // Default 10 000 K (Arctic Daylight / SAD Therapy)
+        this.minKelvin = 1500;
+    }
+
+    setMaxKelvin(k) {
+        this.maxKelvin = Math.max(3000, Math.min(10000, Number(k) || 10000));
     }
 
     static kelvinToRGB(kelvin) {
@@ -364,7 +370,7 @@ class SomniaSunriseEngine {
         }
         green = Math.min(255, Math.max(0, green));
 
-        // Blue (ipRGC melatopsin peak at 480nm, max at 6500K)
+        // Blue (ipRGC melanopsin peak at 480nm)
         if (temp >= 66) {
             blue = 255;
         } else if (temp <= 19) {
@@ -373,6 +379,13 @@ class SomniaSunriseEngine {
             blue = temp - 10;
             blue = 138.5177312231 * Math.log(blue) - 305.0447927307;
             blue = Math.min(255, Math.max(0, blue));
+        }
+
+        // Arctic Sky & SAD Therapy compensation above 6600K up to 10 000K
+        if (kelvin > 6600) {
+            const boost = Math.min(1.0, (kelvin - 6600) / 3400); // 0.0 -> 1.0
+            red = red * (1.0 - 0.22 * boost);
+            green = green * (1.0 - 0.08 * boost);
         }
 
         return { r: Math.round(red), g: Math.round(green), b: Math.round(blue) };
@@ -396,7 +409,7 @@ class SomniaSunriseEngine {
             const sigmoid = (t) => 1 / (1 + Math.exp(-6 * (t - 0.5)));
             const ease = sigmoid(progress);
 
-            const kelvin = Math.round(1500 + (6500 - 1500) * ease);
+            const kelvin = Math.round(this.minKelvin + (this.maxKelvin - this.minKelvin) * ease);
             const lux = Math.pow(progress, 1.8);
             const rgb = SomniaSunriseEngine.kelvinToRGB(kelvin);
 

@@ -646,6 +646,8 @@ function initArgonModules() {
   const sunriseFullscreenKelvin = document.getElementById('sunriseFullscreenKelvin');
   const btnExitSunrise = document.getElementById('btn-exit-sunrise');
 
+  const sunriseMderLbl = document.getElementById('sunrise-mder-lbl');
+
   function updateSunriseVisuals(frame, targetBox, kelvinEl) {
     const { r, g, b } = frame.rgb;
     if (targetBox) {
@@ -654,11 +656,44 @@ function initArgonModules() {
     }
     if (kelvinEl) kelvinEl.textContent = `${frame.kelvin} K`;
     if (sunriseStageLbl) {
-      if (frame.kelvin < 2200) sunriseStageLbl.textContent = 'Глубокий рубиновый свет зари (0% меланопсина)';
-      else if (frame.kelvin < 4000) sunriseStageLbl.textContent = 'Тёплый янтарный восход (Мягкое снижение мелатонина)';
-      else sunriseStageLbl.textContent = 'Дневной синий спектр D65 (Запуск кортизола и бодрости)';
+      if (frame.kelvin < 2200) {
+        sunriseStageLbl.textContent = 'Глубокий рубиновый свет зари (0% меланопсина)';
+        if (sunriseMderLbl) sunriseMderLbl.textContent = 'm-DER: 0.05 • Мелатонин сохранён';
+      } else if (frame.kelvin < 4000) {
+        sunriseStageLbl.textContent = 'Тёплый янтарный восход (Мягкое снижение мелатонина)';
+        if (sunriseMderLbl) sunriseMderLbl.textContent = 'm-DER: 0.45 • Старт выработки кортизола';
+      } else if (frame.kelvin < 6600) {
+        sunriseStageLbl.textContent = 'Дневной синий спектр D65 (Запуск бодрости и фокуса)';
+        if (sunriseMderLbl) sunriseMderLbl.textContent = 'm-DER: 0.90 • Высокое подавление мелатонина';
+      } else {
+        sunriseStageLbl.textContent = '❄️ Арктический свет 10 000 K (Максимум ipRGC, взрыв дофамина)';
+        if (sunriseMderLbl) sunriseMderLbl.textContent = 'm-DER: 1.30 • 100% блокировка мелатонина (SAD Therapy)';
+      }
     }
   }
+
+  // Preset CCT Target Buttons (10 000 K / 6 500 K / 4 500 K)
+  const cctBtns = [
+    document.getElementById('btn-cct-10k'),
+    document.getElementById('btn-cct-65k'),
+    document.getElementById('btn-cct-45k')
+  ];
+
+  cctBtns.forEach(btn => {
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+      cctBtns.forEach(b => b && b.classList.remove('active'));
+      btn.classList.add('active');
+      const cct = parseInt(btn.getAttribute('data-cct') || '10000', 10);
+      if (window.somniaSunrise) {
+        window.somniaSunrise.setMaxKelvin(cct);
+      }
+      if (btnSunrisePreview) {
+        btnSunrisePreview.textContent = `⚡ Тестовый рассвет (до ${cct.toLocaleString()} K)`;
+      }
+      if (window.Haptics) window.Haptics.light();
+    });
+  });
 
   if (btnSunrisePreview && window.somniaSunrise) {
     btnSunrisePreview.addEventListener('click', () => {
