@@ -182,6 +182,18 @@ function initAutopilot() {
     }
   }
 
+  // Lockscreen MediaSession action integration
+  window.onMediaSessionPlay = () => {
+    if (!isAutopilotOn) {
+      btnAutopilot.click();
+    }
+  };
+  window.onMediaSessionPause = () => {
+    if (isAutopilotOn) {
+      btnAutopilot.click();
+    }
+  };
+
   // Volume sliders
   brownSlider.addEventListener('input', (e) => {
     window.somniaAudio.setBrownVolume(parseFloat(e.target.value));

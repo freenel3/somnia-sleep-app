@@ -10,8 +10,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Somnia">
-  <link rel="stylesheet" href="styles.css?v=2026.12">
-  <link rel="manifest" href="manifest.json?v=2026.12">
+  <link rel="stylesheet" href="styles.css?v=2026.13">
+  <link rel="manifest" href="manifest.json?v=2026.13">
   <script>
     // Somnia 2026 Cache Auto-Purge: forces Android Chrome to flush stale cache on update
     const SOMNIA_BUILD = '2026.10.1';
@@ -106,6 +106,12 @@
               <option value="0" style="background: #0A0D18;">Без таймера</option>
             </select>
           </div>
+        </div>
+
+        <!-- Background Audio KeepAlive Status Badge -->
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: #10B981; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 12px; padding: 7px 12px; margin-top: 4px;">
+          <span>🛡️</span>
+          <span><b>Фоновый режим 24/7 активен:</b> звук не засыпает при блокировке экрана и управляется со шторки телефона.</span>
         </div>
 
         <!-- Sound Layers Mixer -->
@@ -872,15 +878,15 @@
     </div>
   </div>
 
-  <script src="audio-engine.js?v=2026.12"></script>
-  <script src="sleep-engine.js?v=2026.12"></script>
-  <script src="argon-modules.js?v=2026.12"></script>
-  <script src="breathwork.js?v=2026.12"></script>
-  <script src="tracker.js?v=2026.12"></script>
-  <script src="sleepy-course.js?v=2026.12"></script>
-  <script src="mifit-sync.js?v=2026.12"></script>
-  <script src="sleepy-ai.js?v=2026.12"></script>
-  <script src="app.js?v=2026.12"></script>
+  <script src="audio-engine.js?v=2026.13"></script>
+  <script src="sleep-engine.js?v=2026.13"></script>
+  <script src="argon-modules.js?v=2026.13"></script>
+  <script src="breathwork.js?v=2026.13"></script>
+  <script src="tracker.js?v=2026.13"></script>
+  <script src="sleepy-course.js?v=2026.13"></script>
+  <script src="mifit-sync.js?v=2026.13"></script>
+  <script src="sleepy-ai.js?v=2026.13"></script>
+  <script src="app.js?v=2026.13"></script>
   <script>
     // Register Service Worker for 100% Offline PWA Mode
     if ('serviceWorker' in navigator) {

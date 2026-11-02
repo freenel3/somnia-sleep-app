@@ -1,7 +1,11 @@
 /**
- * SOMNIA Web Audio Procedural Sound Engine
+ * SOMNIA Web Audio Procedural Sound Engine 2026
  * Generates pure procedural brown noise, rain, ocean waves, and binaural delta/theta beats.
  * Zero external audio files required. 100% offline & royalty-free.
+ * 
+ * Includes 24/7 Background Audio Keepalive (sub-audible LSB dither loop),
+ * MediaSession API integration for Android lockscreen playback,
+ * Screen WakeLock, and robust AudioContext auto-resume on screen lock/unlock.
  */
 class SomniaAudioEngine {
   constructor() {
@@ -10,6 +14,10 @@ class SomniaAudioEngine {
     this.timerId = null;
     this.fadeTimerId = null;
     this.isPlaying = false;
+    this.wakeLock = null;
+    this.keepAliveAudio = null;
+    this._subAudibleURI = null;
+    this._lifecycleHooked = false;
 
     // Track active nodes
     this.nodes = {
@@ -27,17 +35,214 @@ class SomniaAudioEngine {
     };
   }
 
+  // --- Sub-Audible KeepAlive Mechanism (Prevents Android Chrome Doze sleep) ---
+  _generateSubAudibleWavURI() {
+    if (this._subAudibleURI) return this._subAudibleURI;
+    const sampleRate = 8000;
+    const numSamples = 1600; // 0.2s of sub-audible 1 LSB dither (keeps Android DSP HAL awake)
+    const buffer = new ArrayBuffer(44 + numSamples * 2);
+    const view = new DataView(buffer);
+
+    const writeString = (offset, str) => {
+      for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+    };
+
+    writeString(0, 'RIFF');
+    view.setUint32(4, 36 + numSamples * 2, true);
+    writeString(8, 'WAVE');
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true); // PCM
+    view.setUint16(22, 1, true); // Mono
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true);
+    view.setUint16(32, 2, true); // Block align
+    view.setUint16(34, 16, true); // Bits per sample
+    writeString(36, 'data');
+    view.setUint32(40, numSamples * 2, true);
+
+    let offset = 44;
+    for (let i = 0; i < numSamples; i++) {
+      const sample = (i % 2 === 0) ? 1 : -1;
+      view.setInt16(offset, sample, true);
+      offset += 2;
+    }
+
+    const blob = new Blob([buffer], { type: 'audio/wav' });
+    this._subAudibleURI = URL.createObjectURL(blob);
+    return this._subAudibleURI;
+  }
+
+  _ensureKeepAliveElement() {
+    if (!this.keepAliveAudio) {
+      const audio = document.createElement('audio');
+      audio.setAttribute('loop', 'true');
+      audio.setAttribute('playsinline', 'true');
+      audio.setAttribute('webkit-playsinline', 'true');
+      audio.setAttribute('preload', 'auto');
+      audio.style.position = 'fixed';
+      audio.style.width = '1px';
+      audio.style.height = '1px';
+      audio.style.opacity = '0.001';
+      audio.style.pointerEvents = 'none';
+      audio.style.top = '-9999px';
+      audio.src = this._generateSubAudibleWavURI();
+      document.body.appendChild(audio);
+      this.keepAliveAudio = audio;
+    }
+    return this.keepAliveAudio;
+  }
+
+  async startBackgroundKeepAlive() {
+    const audio = this._ensureKeepAliveElement();
+    try {
+      if (audio.paused) {
+        await audio.play();
+      }
+    } catch (e) {
+      console.warn('[SomniaAudio] Keepalive play deferred until gesture:', e);
+    }
+    this._initMediaSession();
+    this.requestWakeLock();
+  }
+
+  stopBackgroundKeepAlive() {
+    if (this.keepAliveAudio && !this.keepAliveAudio.paused) {
+      try {
+        this.keepAliveAudio.pause();
+      } catch (e) {}
+    }
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.playbackState = 'paused';
+    }
+    this.releaseWakeLock();
+  }
+
+  _initMediaSession() {
+    if (!('mediaSession' in navigator)) return;
+
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: 'SOMNIA • Нейро-Кокон Сна',
+        artist: 'Коричневый шум & Дельта 2.0 Гц',
+        album: 'Циркадный автопилот засыпания 2026',
+        artwork: [
+          { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' }
+        ]
+      });
+
+      const handlers = [
+        ['play', () => {
+          this.resumeAudioContext();
+          if (window.onMediaSessionPlay) window.onMediaSessionPlay();
+        }],
+        ['pause', () => {
+          this.stopAll();
+          if (window.onMediaSessionPause) window.onMediaSessionPause();
+        }],
+        ['stop', () => {
+          this.stopAll();
+          if (window.onMediaSessionPause) window.onMediaSessionPause();
+        }]
+      ];
+
+      handlers.forEach(([action, handler]) => {
+        try {
+          navigator.mediaSession.setActionHandler(action, handler);
+        } catch (e) {}
+      });
+
+      navigator.mediaSession.playbackState = 'playing';
+    } catch (e) {
+      console.warn('[SomniaAudio] MediaSession init error:', e);
+    }
+  }
+
+  async requestWakeLock() {
+    if ('wakeLock' in navigator && !this.wakeLock) {
+      try {
+        this.wakeLock = await navigator.wakeLock.request('screen');
+        this.wakeLock.addEventListener('release', () => {
+          this.wakeLock = null;
+        });
+      } catch (err) {
+        // May fail if low battery or tab in background, keepalive audio handles that
+      }
+    }
+  }
+
+  releaseWakeLock() {
+    if (this.wakeLock) {
+      try {
+        this.wakeLock.release();
+      } catch (e) {}
+      this.wakeLock = null;
+    }
+  }
+
+  _setupLifecycleHooks() {
+    if (this._lifecycleHooked) return;
+    this._lifecycleHooked = true;
+
+    // 1. Visibility Change (Screen off/on or app switch)
+    document.addEventListener('visibilitychange', () => {
+      if (this.isPlaying) {
+        this.resumeAudioContext();
+        if (this.keepAliveAudio && this.keepAliveAudio.paused) {
+          this.keepAliveAudio.play().catch(() => {});
+        }
+        if (!document.hidden) {
+          this.requestWakeLock();
+        }
+      }
+    });
+
+    // 2. AudioContext statechange
+    if (this.ctx) {
+      this.ctx.onstatechange = () => {
+        if (this.isPlaying && this.ctx.state === 'suspended') {
+          this.ctx.resume().catch(() => {});
+        }
+      };
+    }
+
+    // 3. User interaction unlocker
+    const unlock = () => {
+      if (this.isPlaying && this.ctx && this.ctx.state === 'suspended') {
+        this.ctx.resume().catch(() => {});
+      }
+    };
+    ['touchstart', 'touchend', 'click'].forEach(evt => {
+      document.addEventListener(evt, unlock, { passive: true });
+    });
+  }
+
   initContext() {
     if (!this.ctx) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      this.ctx = new AudioCtx();
+      this.ctx = new AudioCtx({ latencyHint: 'playback' });
       this.masterGain = this.ctx.createGain();
       this.masterGain.gain.setValueAtTime(0.8, this.ctx.currentTime);
       this.masterGain.connect(this.ctx.destination);
+      this._setupLifecycleHooks();
     }
-    if (this.ctx.state === 'suspended') {
-      this.ctx.resume();
+    this.resumeAudioContext();
+  }
+
+  resumeAudioContext() {
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume().catch(() => {});
     }
+  }
+
+  checkActiveSounds() {
+    const hasActive = !!(this.nodes.brownNoise || this.nodes.rainSource || this.nodes.binauralLeft);
+    if (!hasActive) {
+      this.isPlaying = false;
+      this.stopBackgroundKeepAlive();
+    }
+    return hasActive;
   }
 
   // --- Procedural Noise Buffers ---
@@ -110,6 +315,7 @@ class SomniaAudioEngine {
     this.nodes.brownNoise = source;
     this.nodes.brownGain = gain;
     this.isPlaying = true;
+    this.startBackgroundKeepAlive();
   }
 
   stopBrownNoise() {
@@ -119,6 +325,7 @@ class SomniaAudioEngine {
       this.nodes.brownNoise = null;
       this.nodes.brownGain = null;
     }
+    this.checkActiveSounds();
   }
 
   setBrownVolume(val) {
@@ -152,6 +359,7 @@ class SomniaAudioEngine {
     this.nodes.rainSource = source;
     this.nodes.rainGain = gain;
     this.isPlaying = true;
+    this.startBackgroundKeepAlive();
   }
 
   stopRain() {
@@ -161,6 +369,7 @@ class SomniaAudioEngine {
       this.nodes.rainSource = null;
       this.nodes.rainGain = null;
     }
+    this.checkActiveSounds();
   }
 
   setRainVolume(val) {
@@ -208,6 +417,7 @@ class SomniaAudioEngine {
     this.nodes.binauralRight = oscRight;
     this.nodes.binauralGain = binauralGain;
     this.isPlaying = true;
+    this.startBackgroundKeepAlive();
   }
 
   stopBinaural() {
@@ -220,6 +430,7 @@ class SomniaAudioEngine {
       this.nodes.binauralRight = null;
       this.nodes.binauralGain = null;
     }
+    this.checkActiveSounds();
   }
 
   setBinauralVolume(val) {
@@ -236,7 +447,6 @@ class SomniaAudioEngine {
 
     osc.type = 'sine';
     osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-    // Subtle detuned shimmer harmonic
     const osc2 = this.ctx.createOscillator();
     osc2.type = 'sine';
     osc2.frequency.setValueAtTime(freq * 1.5, this.ctx.currentTime);
@@ -255,7 +465,12 @@ class SomniaAudioEngine {
     osc2.stop(this.ctx.currentTime + duration);
   }
 
-  // --- Sleep Timer with 60s Fade Out ---
+  // Singing bowl chime for sunrise / wake
+  triggerSingingBowl(freq = 432) {
+    this.playChime(freq, 3.5);
+  }
+
+  // --- Sleep Timer with 60s Fade Out (Background Doze resilient) ---
   setSleepTimer(minutes, onComplete = null) {
     this.clearSleepTimer();
     if (minutes <= 0) return;
@@ -294,6 +509,7 @@ class SomniaAudioEngine {
     this.stopBinaural();
     this.clearSleepTimer();
     this.isPlaying = false;
+    this.stopBackgroundKeepAlive();
   }
 }
 
