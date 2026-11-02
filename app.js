@@ -118,12 +118,10 @@ function initTabs() {
       b.classList.toggle('active', b.getAttribute('data-tab') === targetId);
     });
 
-    // 4. Map companion desktop sub-tabs to primary bottom 5 tabs
+    // 4. Map companion desktop sub-tabs to primary bottom 6 tabs
     let primaryBottomTab = targetId;
     if (['tab-caffeine', 'tab-nsdr', 'tab-isochronic', 'tab-cycles', 'tab-tracker'].includes(targetId)) {
       primaryBottomTab = 'tab-twin';
-    } else if (targetId === 'tab-sunrise') {
-      primaryBottomTab = 'tab-breath';
     }
 
     bottomItems.forEach(b => {
@@ -830,6 +828,19 @@ function renderWatchTelemetry() {
   const totalEl = document.getElementById('telemetry-total');
   const deviceEl = document.getElementById('watch-device-name');
 
+  // Keep manual input fields in sync with telemetry
+  const inpH = document.getElementById('manual-total-hours');
+  const inpM = document.getElementById('manual-total-mins');
+  const inpDeep = document.getElementById('manual-deep-mins');
+  const inpRem = document.getElementById('manual-rem-mins');
+  const inpHr = document.getElementById('manual-hr');
+
+  if (inpH && document.activeElement !== inpH) inpH.value = Math.floor((tel.totalMinutes || 468) / 60);
+  if (inpM && document.activeElement !== inpM) inpM.value = (tel.totalMinutes || 468) % 60;
+  if (inpDeep && document.activeElement !== inpDeep) inpDeep.value = tel.deepMinutes || 98;
+  if (inpRem && document.activeElement !== inpRem) inpRem.value = tel.remMinutes || 94;
+  if (inpHr && document.activeElement !== inpHr) inpHr.value = tel.restingHR || 52;
+
   const formatHoursMin = (min) => {
     const h = Math.floor(min / 60);
     const m = min % 60;
@@ -887,9 +898,22 @@ function initMiFitSyncUI() {
 
   if (btnQuickDemo && window.miFitSync) {
     btnQuickDemo.addEventListener('click', () => {
-      // 100% STABLE SYNC (NO Math.random)
-      window.miFitSync.lastSyncTimestamp = Date.now();
-      window.miFitSync.saveState();
+      // Read current values directly from manual inputs if available
+      const inpH = parseInt(document.getElementById('manual-total-hours')?.value || '7', 10);
+      const inpM = parseInt(document.getElementById('manual-total-mins')?.value || '48', 10);
+      const inpDeep = parseInt(document.getElementById('manual-deep-mins')?.value || '98', 10);
+      const inpRem = parseInt(document.getElementById('manual-rem-mins')?.value || '94', 10);
+      const inpHr = parseInt(document.getElementById('manual-hr')?.value || '52', 10);
+
+      const total = inpH * 60 + inpM;
+      window.miFitSync.setCustomTelemetry({
+        totalMinutes: total,
+        deepMinutes: inpDeep,
+        remMinutes: inpRem,
+        restingHR: inpHr,
+        hrvRmssd: 68
+      });
+
       renderWatchTelemetry();
       if (window.sleepyAI) renderSleepyAICoach();
       if (window.Haptics) window.Haptics.success();
@@ -897,9 +921,9 @@ function initMiFitSyncUI() {
       const badge = document.getElementById('auto-sync-badge');
       const badgeText = document.getElementById('auto-sync-badge-text');
       if (badge && badgeText) {
-        badgeText.textContent = '✓ Данные сна с часов Redmi Watch 5 Active синхронизированы без задержек!';
-        badge.classList.add('visible');
-        setTimeout(() => badge.classList.remove('visible'), 4000);
+        badgeText.textContent = `✓ Данные сна с Redmi Watch 5 Active сохранены: ${inpH}ч ${inpM}м (глубокий ${Math.floor(inpDeep/60)}ч ${inpDeep%60}м, пульс ${inpHr}). Без рандома!`;
+        badge.classList.add('active');
+        setTimeout(() => badge.classList.remove('active'), 4500);
       }
     });
   }

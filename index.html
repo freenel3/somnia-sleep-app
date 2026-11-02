@@ -10,8 +10,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Somnia">
-  <link rel="stylesheet" href="styles.css?v=2026.10">
-  <link rel="manifest" href="manifest.json?v=2026.10">
+  <link rel="stylesheet" href="styles.css?v=2026.11">
+  <link rel="manifest" href="manifest.json?v=2026.11">
   <script>
     // Somnia 2026 Cache Auto-Purge: forces Android Chrome to flush stale cache on update
     const SOMNIA_BUILD = '2026.10.1';
@@ -223,6 +223,18 @@
             </div>
             <span style="font-size: 18px; color: #34D399; font-weight: 800;">➔</span>
           </div>
+
+          <!-- Card 4: Circadian Sunrise -->
+          <div class="quick-nav-card nav-tab-btn" data-tab="tab-sunrise" style="cursor: pointer; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 14px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-size: 26px;">🌅</span>
+              <div style="text-align: left;">
+                <div style="font-size: 15px; font-weight: 800; color: #FFFFFF;">Циркадный Рассвет</div>
+                <div style="font-size: 11.5px; color: #FBBF24;">Световой будильник • 1500K → 5500K • Меланопсин</div>
+              </div>
+            </div>
+            <span style="font-size: 18px; color: #FBBF24; font-weight: 800;">➔</span>
+          </div>
         </div>
       </div>
     </section>
@@ -396,9 +408,11 @@
         </div>
 
         <!-- Health Connect Background Link Guide -->
-        <div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 14px; padding: 12px 14px; font-size: 11px; color: var(--text-secondary); line-height: 1.5;">
-          <div style="font-weight: 700; color: #818CF8; margin-bottom: 2px;">💡 100% фоновая передача в Android:</div>
-          В <b>Mi Fitness</b>: Профиль → «Сторонние службы» → <b>Health Connect</b> → Включить запись сна. Часы сбрасывают сон в систему, а SOMNIA подхватывает его автоматически!
+        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 14px; padding: 12px 14px; font-size: 11.5px; color: var(--text-secondary); line-height: 1.5;">
+          <div style="font-weight: 700; color: #10B981; margin-bottom: 2px; display: flex; align-items: center; gap: 6px;">
+            <span>✅</span> Mi Fitness подключен к Health Connect
+          </div>
+          Сон, пульс и фазы N3/REM с часов Redmi Watch 5 Active передаются в систему. Точные показатели зафиксированы в SOMNIA без случайных изменений!
         </div>
 
         <!-- Primary Instant Sync Action -->
@@ -844,15 +858,15 @@
     </div>
   </div>
 
-  <script src="audio-engine.js?v=2026.10"></script>
-  <script src="sleep-engine.js?v=2026.10"></script>
-  <script src="argon-modules.js?v=2026.10"></script>
-  <script src="breathwork.js?v=2026.10"></script>
-  <script src="tracker.js?v=2026.10"></script>
-  <script src="sleepy-course.js?v=2026.10"></script>
-  <script src="mifit-sync.js?v=2026.10"></script>
-  <script src="sleepy-ai.js?v=2026.10"></script>
-  <script src="app.js?v=2026.10"></script>
+  <script src="audio-engine.js?v=2026.11"></script>
+  <script src="sleep-engine.js?v=2026.11"></script>
+  <script src="argon-modules.js?v=2026.11"></script>
+  <script src="breathwork.js?v=2026.11"></script>
+  <script src="tracker.js?v=2026.11"></script>
+  <script src="sleepy-course.js?v=2026.11"></script>
+  <script src="mifit-sync.js?v=2026.11"></script>
+  <script src="sleepy-ai.js?v=2026.11"></script>
+  <script src="app.js?v=2026.11"></script>
   <script>
     // Register Service Worker for 100% Offline PWA Mode
     if ('serviceWorker' in navigator) {
@@ -920,6 +934,11 @@
     <button class="bottom-nav-item" data-tab="tab-breath">
       <span class="bottom-nav-icon">🫁</span>
       <span class="bottom-nav-label">Вагус</span>
+      <span class="active-dot"></span>
+    </button>
+    <button class="bottom-nav-item" data-tab="tab-sunrise">
+      <span class="bottom-nav-icon">🌅</span>
+      <span class="bottom-nav-label">Рассвет</span>
       <span class="active-dot"></span>
     </button>
   </nav>

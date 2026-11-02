@@ -867,19 +867,20 @@ button:active, .btn-icon:active, .btn-primary:active, .btn-autopilot:active, .bt
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 2px;
   background: transparent;
   border: none;
   color: #64748B;
   cursor: pointer;
-  padding: 6px 14px;
-  border-radius: 14px;
+  padding: 6px 2px;
+  border-radius: 12px;
   position: relative;
   will-change: transform;
   transform: scale(1) translateZ(0);
   transition: transform 0.15s var(--ease-spring), color 0.2s ease;
   flex: 1;
-  max-width: 90px;
+  max-width: 62px;
+  min-width: 0;
 }
 
 .bottom-nav-item:active {
@@ -887,15 +888,18 @@ button:active, .btn-icon:active, .btn-primary:active, .btn-autopilot:active, .bt
 }
 
 .bottom-nav-icon {
-  font-size: 20px;
+  font-size: 19px;
   line-height: 1;
   transition: transform 0.25s var(--ease-spring), filter 0.25s ease;
 }
 
 .bottom-nav-label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: -0.2px;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   transition: color 0.2s ease;
 }
 
