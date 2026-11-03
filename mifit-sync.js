@@ -71,15 +71,50 @@ class MiFitnessSyncEngine {
     return days;
   }
 
+  getEmptyNight() {
+    const d = new Date();
+    return {
+      id: `manual_${Date.now()}`,
+      date: d.toISOString().split('T')[0],
+      dayOfWeek: 'Сегодня',
+      dayNum: d.getDate(),
+      monthName: d.toLocaleString('ru', { month: 'short' }),
+      isToday: true,
+      totalMinutes: 468, // Default 7h 48m baseline
+      deepMinutes: 98,
+      remMinutes: 94,
+      lightMinutes: 258,
+      awakeMinutes: 18,
+      restingHR: 52,
+      hrvRmssd: 68,
+      bedtime: '23:30',
+      waketime: '07:18',
+      latencyMinutes: 14,
+      source: 'MANUAL_ENTRY'
+    };
+  }
+
   loadState() {
     try {
+      const mode = localStorage.getItem('somnia_history_mode') || 
+                   (localStorage.getItem('somnia_sleep_has_real_file') === 'true' ? 'file' : 'demo');
       const savedHistory = localStorage.getItem('somnia_sleep_history_v2');
-      const hasRealFile = localStorage.getItem('somnia_sleep_has_real_file') === 'true';
-      if (savedHistory) {
+
+      if (mode === 'file' && savedHistory) {
         this.history = JSON.parse(savedHistory);
-        this.isDemo = !hasRealFile;
+        this.historyMode = 'file';
+        this.isDemo = false;
+      } else if (mode === 'cleared') {
+        this.history = savedHistory ? JSON.parse(savedHistory) : [];
+        if (this.history.length === 0) {
+          this.history = [this.getEmptyNight()];
+        }
+        this.historyMode = 'cleared';
+        this.isDemo = false;
       } else {
+        // Mode 'demo': Always guarantee 30 days of calibrated baseline
         this.history = this.getSeedHistory();
+        this.historyMode = 'demo';
         this.isDemo = true;
         this.saveHistory();
       }
@@ -89,33 +124,27 @@ class MiFitnessSyncEngine {
     } catch (e) {
       console.warn('[MiFitSync] Could not load history, using seed:', e);
       this.history = this.getSeedHistory();
+      this.historyMode = 'demo';
       this.isDemo = true;
       this.telemetry = this.history[0];
     }
   }
 
   clearDemoHistory() {
-    this.history = [{
-      id: `manual_${Date.now()}`,
-      date: new Date().toISOString().split('T')[0],
-      dayOfWeek: 'Сегодня',
-      dayNum: new Date().getDate(),
-      monthName: '',
-      isToday: true,
-      totalMinutes: 0,
-      deepMinutes: 0,
-      remMinutes: 0,
-      lightMinutes: 0,
-      awakeMinutes: 0,
-      restingHR: 0,
-      hrvRmssd: 0,
-      bedtime: '--:--',
-      waketime: '--:--',
-      latencyMinutes: 0,
-      source: 'MANUAL_EMPTY'
-    }];
+    this.history = [this.getEmptyNight()];
+    this.historyMode = 'cleared';
     this.isDemo = false;
-    localStorage.removeItem('somnia_sleep_has_real_file');
+    localStorage.setItem('somnia_history_mode', 'cleared');
+    this.selectedDayIndex = 0;
+    this.telemetry = this.history[0];
+    this.saveHistory();
+  }
+
+  restoreDemoHistory() {
+    this.history = this.getSeedHistory();
+    this.historyMode = 'demo';
+    this.isDemo = true;
+    localStorage.setItem('somnia_history_mode', 'demo');
     this.selectedDayIndex = 0;
     this.telemetry = this.history[0];
     this.saveHistory();
@@ -312,6 +341,8 @@ class MiFitnessSyncEngine {
       this.selectedDayIndex = 0;
       this.telemetry = this.history[0];
       this.isDemo = false;
+      this.historyMode = 'file';
+      localStorage.setItem('somnia_history_mode', 'file');
       localStorage.setItem('somnia_sleep_has_real_file', 'true');
       this.saveHistory();
     }

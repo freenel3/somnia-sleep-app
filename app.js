@@ -905,12 +905,13 @@ function renderWatchTelemetry() {
   // Render History & Brutal Audit
   const badgeEl = document.getElementById('history-provenance-badge');
   if (badgeEl && window.miFitSync) {
-    if (window.miFitSync.isDemo) {
+    const mode = window.miFitSync.historyMode || (window.miFitSync.isDemo ? 'demo' : 'cleared');
+    if (mode === 'demo') {
       badgeEl.innerHTML = `
         <div style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #F59E0B; gap: 8px;">
           <div>
             <b>⚠️ Демо-шаблон (30 калибровочных ночей)</b><br>
-            <span style="color: rgba(255,255,255,0.7); font-size: 10px;">Дни без записи заполнены макетом. Нажмите <b>«📂 Файл Mi Fitness»</b> выше для вашей настоящей истории!</span>
+            <span style="color: rgba(255,255,255,0.7); font-size: 10px;">Дни без записи заполнены макетом. Нажмите «Очистить демо», чтобы оставить только ваши личные ночи, или «📂 Файл Mi Fitness».</span>
           </div>
           <button id="btn-clear-demo" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 10px; white-space: nowrap; font-weight: 600;">Очистить демо</button>
         </div>
@@ -922,12 +923,37 @@ function renderWatchTelemetry() {
           renderWatchTelemetry();
         };
       }
-    } else {
+    } else if (mode === 'cleared') {
       badgeEl.innerHTML = `
-        <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 6px 12px; margin-bottom: 12px; font-size: 11px; color: #10B981;">
-          ✓ <b>Реальная история Mi Fitness</b> (${window.miFitSync.history.length} ночей из вашего профиля)
+        <div style="background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #38BDF8; gap: 8px;">
+          <div>
+            <b>✨ Демо-история очищена</b><br>
+            <span style="color: rgba(255,255,255,0.7); font-size: 10px;">Отображаются только ваши введенные ночи (${window.miFitSync.history.length}). Вы можете ввести данные вручную или загрузить файл Mi Fitness.</span>
+          </div>
+          <button id="btn-restore-demo" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 10px; white-space: nowrap; font-weight: 600;">Вернуть демо 30д</button>
         </div>
       `;
+      const btnRestore = document.getElementById('btn-restore-demo');
+      if (btnRestore) {
+        btnRestore.onclick = () => {
+          window.miFitSync.restoreDemoHistory();
+          renderWatchTelemetry();
+        };
+      }
+    } else {
+      badgeEl.innerHTML = `
+        <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 6px 12px; margin-bottom: 12px; font-size: 11px; color: #10B981; display: flex; justify-content: space-between; align-items: center;">
+          <span>✓ <b>Реальная история Mi Fitness</b> (${window.miFitSync.history.length} ночей из выгрузки)</span>
+          <button id="btn-restore-demo-alt" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 9px;">Вернуть демо</button>
+        </div>
+      `;
+      const btnRestoreAlt = document.getElementById('btn-restore-demo-alt');
+      if (btnRestoreAlt) {
+        btnRestoreAlt.onclick = () => {
+          window.miFitSync.restoreDemoHistory();
+          renderWatchTelemetry();
+        };
+      }
     }
   }
 
