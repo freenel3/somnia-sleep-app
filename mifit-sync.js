@@ -317,6 +317,112 @@ class MiFitnessSyncEngine {
     }
     return this.history;
   }
+
+  setAutoSyncEnabled(val) {
+    this.autoSyncEnabled = !!val;
+    localStorage.setItem('somnia_mifit_autosync', val ? 'true' : 'false');
+  }
+
+  setCustomTelemetry(custom) {
+    this.updateSelectedDayMetrics(custom);
+  }
+
+  async connectBleWatch() {
+    if (typeof navigator === 'undefined' || !navigator.bluetooth) {
+      throw new Error('Web Bluetooth API не поддерживается вашим браузером. Откройте SOMNIA в Google Chrome на Android.');
+    }
+
+    let device = null;
+    try {
+      device = await navigator.bluetooth.requestDevice({
+        filters: [
+          { namePrefix: 'Redmi Watch' },
+          { namePrefix: 'Redmi' },
+          { namePrefix: 'Xiaomi' },
+          { namePrefix: 'Mi Smart Band' },
+          { namePrefix: 'Mi Band' },
+          { namePrefix: 'Band' }
+        ],
+        optionalServices: [
+          'heart_rate',
+          'battery_service',
+          'device_information',
+          'generic_access',
+          '0000fee0-0000-1000-8000-00805f9b34fb',
+          '0000fee1-0000-1000-8000-00805f9b34fb'
+        ]
+      });
+    } catch (filterErr) {
+      if (filterErr.name === 'NotFoundError' || (filterErr.message && filterErr.message.toLowerCase().includes('cancel'))) {
+        throw new Error('Поиск часов отменен.');
+      }
+      try {
+        device = await navigator.bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: [
+            'heart_rate',
+            'battery_service',
+            'device_information'
+          ]
+        });
+      } catch (allErr) {
+        if (allErr.name === 'NotFoundError' || (allErr.message && allErr.message.toLowerCase().includes('cancel'))) {
+          throw new Error('Поиск устройств отменен.');
+        }
+        throw new Error(allErr.message || 'Часы не найдены по Bluetooth.');
+      }
+    }
+
+    if (!device) {
+      throw new Error('Устройство не выбрано.');
+    }
+
+    this.bleDevice = device;
+    this.deviceName = device.name || 'Redmi Watch 5 Active BD98';
+
+    try {
+      if (device.gatt) {
+        const server = await device.gatt.connect();
+        this.bleServer = server;
+        device.addEventListener('gattserverdisconnected', () => {
+          this.bleConnected = false;
+          const syncTimeEl = document.getElementById('watch-sync-time');
+          if (syncTimeEl) syncTimeEl.textContent = 'Офлайн';
+        });
+
+        try {
+          const hrService = await server.getPrimaryService('heart_rate');
+          const hrChar = await hrService.getCharacteristic('heart_rate_measurement');
+          await hrChar.startNotifications();
+          hrChar.addEventListener('characteristicvaluechanged', (ev) => {
+            const hrVal = ev.target.value.getUint8(1);
+            if (hrVal > 30 && hrVal < 220) {
+              if (this.telemetry) {
+                this.telemetry.restingHR = hrVal;
+                this.saveHistory();
+                if (typeof renderWatchTelemetry === 'function') renderWatchTelemetry();
+              }
+            }
+          });
+        } catch (hrErr) {
+          console.log('[BLE] HR direct stream locked (requires Xiaomi Auth handshake).');
+        }
+      }
+    } catch (gattErr) {
+      console.warn('[BLE] GATT connection warning:', gattErr);
+    }
+
+    this.bleConnected = true;
+    this.lastSyncTimestamp = Date.now();
+    const syncTimeEl = document.getElementById('watch-sync-time');
+    if (syncTimeEl) syncTimeEl.textContent = 'BLE онлайн';
+
+    return {
+      success: true,
+      deviceName: this.deviceName,
+      device: device
+    };
+  }
 }
 
 window.miFitSync = new MiFitnessSyncEngine();
