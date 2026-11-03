@@ -10,8 +10,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Somnia">
-  <link rel="stylesheet" href="styles.css?v=2026.14">
-  <link rel="manifest" href="manifest.json?v=2026.14">
+  <link rel="stylesheet" href="styles.css?v=2026.16">
+  <link rel="manifest" href="manifest.json?v=2026.16">
   <script>
     // Somnia 2026 Cache Auto-Purge: forces Android Chrome to flush stale cache on update
     const SOMNIA_BUILD = '2026.10.1';
@@ -355,10 +355,25 @@
             <span style="font-size: 22px;">🤖</span>
             <div>
               <div style="font-size: 15px; font-weight: 800; color: #FFFFFF;">Слипи AI Наставник</div>
-              <div style="font-size: 11px; color: #10B981;">● Онлайн • Знает весь 30-дневный курс</div>
+              <div id="ai-status-indicator" style="font-size: 11px; color: #10B981;">● GPT-6.1 Sol (Tooken Prime) • Онлайн</div>
             </div>
           </div>
           <span style="font-size: 10px; color: var(--accent-cyan); background: rgba(56, 189, 248, 0.15); padding: 3px 8px; border-radius: 8px;">2026 Pro</span>
+        </div>
+
+        <!-- AI Engine Switcher & Status -->
+        <div class="ai-engine-bar" style="display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 12px; padding: 6px 10px; margin-top: 10px; margin-bottom: 8px;">
+          <div style="display: flex; gap: 4px;">
+            <button id="btn-ai-mode-live" class="chip-btn active" style="font-size: 10.5px; padding: 4px 10px; font-weight: 700;">
+              🧠 Живой LLM
+            </button>
+            <button id="btn-ai-mode-offline" class="chip-btn" style="font-size: 10.5px; padding: 4px 10px; font-weight: 700;">
+              ⚡ Офлайн
+            </button>
+          </div>
+          <button id="btn-open-ai-settings" class="chip-btn" style="font-size: 10.5px; padding: 4px 8px; color: var(--accent-cyan); border-color: rgba(56, 189, 248, 0.3);">
+            ⚙️ API Ключ
+          </button>
         </div>
 
         <div id="chat-messages-box" class="chat-history-box">
@@ -415,10 +430,16 @@
 
         <!-- Health Connect Background Link Guide -->
         <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 14px; padding: 12px 14px; font-size: 11.5px; color: var(--text-secondary); line-height: 1.5;">
-          <div style="font-weight: 700; color: #10B981; margin-bottom: 2px; display: flex; align-items: center; gap: 6px;">
-            <span>✅</span> Mi Fitness подключен к Health Connect
+          <div style="font-weight: 700; color: #10B981; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+            <span>✅</span> Mi Fitness подключен к Health Connect Android
           </div>
-          Сон, пульс и фазы N3/REM с часов Redmi Watch 5 Active передаются в систему. Точные показатели зафиксированы в SOMNIA без случайных изменений!
+          <div style="color: #CBD5E1; margin-bottom: 6px;">
+            В Android браузер изолирован от прямого чтения системного Health Connect. Ваши реальные данные фиксируются в SOMNIA двумя надёжными способами:
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px; font-size: 11px;">
+            <div><b>1. Точные цифры:</b> сохраните реальные показатели ночи в форме ниже (1 клик).</div>
+            <div><b>2. Файловый импорт:</b> кнопка «📂 Файл Mi Fitness» загружает полный архив.</div>
+          </div>
         </div>
 
         <!-- Primary Instant Sync Action -->
@@ -907,15 +928,15 @@
     </div>
   </div>
 
-  <script src="audio-engine.js?v=2026.14"></script>
-  <script src="sleep-engine.js?v=2026.14"></script>
-  <script src="argon-modules.js?v=2026.14"></script>
-  <script src="breathwork.js?v=2026.14"></script>
-  <script src="tracker.js?v=2026.14"></script>
-  <script src="sleepy-course.js?v=2026.14"></script>
-  <script src="mifit-sync.js?v=2026.14"></script>
-  <script src="sleepy-ai.js?v=2026.14"></script>
-  <script src="app.js?v=2026.14"></script>
+  <script src="audio-engine.js?v=2026.16"></script>
+  <script src="sleep-engine.js?v=2026.16"></script>
+  <script src="argon-modules.js?v=2026.16"></script>
+  <script src="breathwork.js?v=2026.16"></script>
+  <script src="tracker.js?v=2026.16"></script>
+  <script src="sleepy-course.js?v=2026.16"></script>
+  <script src="mifit-sync.js?v=2026.16"></script>
+  <script src="sleepy-ai.js?v=2026.16"></script>
+  <script src="app.js?v=2026.16"></script>
   <script>
     // Register Service Worker for 100% Offline PWA Mode
     if ('serviceWorker' in navigator) {
@@ -958,6 +979,64 @@
       });
     }
   </script>
+  <!-- Modal: AI LLM Settings -->
+  <div id="modal-llm-settings" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); z-index: 10000; align-items: center; justify-content: center; padding: 16px;">
+    <div class="modal-card" style="max-width: 440px; width: 100%; background: #0b0f19; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 20px; padding: 22px; color: #fff; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 22px;">⚙️</span>
+          <div>
+            <div style="font-size: 15px; font-weight: 800;">Настройки Нейросети (LLM)</div>
+            <div style="font-size: 11px; color: var(--text-muted);">Живой ИИ с доступом к телеметрии сна</div>
+          </div>
+        </div>
+        <button id="btn-close-ai-settings" class="chip-btn" style="padding: 4px 10px; font-size: 12px; cursor: pointer;">✕</button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div>
+          <label style="font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 4px;">Провайдер / Пресет</label>
+          <select id="select-llm-preset" class="factor-input" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.06); color: #fff; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;">
+            <option value="tooken_prime">Tooken Club Prime 10M (Встроенный безлимит 2026)</option>
+            <option value="openrouter">OpenRouter.ai</option>
+            <option value="openai">OpenAI Official (api.openai.com)</option>
+            <option value="custom">Пользовательский URL</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 4px;">Флагманская модель 2026</label>
+          <select id="select-llm-model" class="factor-input" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.06); color: #fff; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;">
+            <option value="gpt-6.1-sol">GPT-6.1 Sol (Глубокий анализ биоритмов)</option>
+            <option value="claude-sonnet-5-5">Claude Sonnet 5.5 (Эмпатия и архитектура)</option>
+            <option value="gemini-4-argon">Gemini 4 Argon (1M+ контекст)</option>
+            <option value="claude-fable-5-1">Claude Fable 5.1 (Художественный сценарист)</option>
+            <option value="gpt-4o-mini">GPT-4o Mini (Ультра-скорость)</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 4px;">Base URL</label>
+          <input type="text" id="input-llm-base-url" class="factor-input" style="width: 100%; background: rgba(255,255,255,0.06); color: #fff; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 8px;" value="https://tooken.club/v1">
+        </div>
+
+        <div>
+          <label style="font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 4px;">API Key</label>
+          <div style="display: flex; gap: 6px;">
+            <input type="password" id="input-llm-api-key" class="factor-input" style="width: 100%; background: rgba(255,255,255,0.06); color: #fff; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 8px;" placeholder="Встроенный Tooken Club активен">
+            <button id="btn-toggle-key-vis" class="chip-btn" style="padding: 4px 10px; font-size: 12px; cursor: pointer;">👁</button>
+          </div>
+          <div style="font-size: 10px; color: #10B981; margin-top: 4px;" id="llm-key-hint">
+            ✓ Встроенный ключ Tooken Club Prime активен (свой ключ не требуется)
+          </div>
+        </div>
+
+        <button id="btn-save-llm-settings" class="btn-autopilot" style="width: 100%; padding: 12px; margin-top: 6px; font-size: 13px; font-weight: 800; background: linear-gradient(135deg, #0284C7, #06B6D4); cursor: pointer;">
+          💾 Сохранить и применить
+        </button>
+      </div>
+    </div>
+  </div>
   <!-- Fixed Native Bottom Navigation Bar (Oura / Whoop 2026 Mobile UX) -->
   <nav class="bottom-nav-bar" id="mobile-bottom-nav">
     <button class="bottom-nav-item active" data-tab="tab-twin">

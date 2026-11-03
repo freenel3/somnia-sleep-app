@@ -1120,7 +1120,7 @@ function renderChatMessages() {
   box.scrollTop = box.scrollHeight;
 }
 
-function sendUserChatMessage(promptText) {
+async function sendUserChatMessage(promptText) {
   if (!promptText || !promptText.trim() || !window.sleepyAI) return;
   if (window.Haptics) window.Haptics.light();
 
@@ -1132,9 +1132,24 @@ function sendUserChatMessage(promptText) {
   });
   renderChatMessages();
 
-  // 2. Generate Sleepy AI response
-  setTimeout(() => {
-    const aiResponse = window.sleepyAI.respondToPrompt(promptText);
+  // 2. Add temporary typing indicator
+  const box = document.getElementById('chat-messages-box');
+  const typingBubble = document.createElement('div');
+  typingBubble.className = 'chat-bubble sleepy typing-indicator';
+  typingBubble.style.opacity = '0.75';
+  typingBubble.style.fontStyle = 'italic';
+  typingBubble.textContent = (window.sleepyAI.mode === 'live')
+    ? '🧠 Слипи анализирует телеметрию с Redmi Watch 5...'
+    : '⚡ Слипи формулирует ответ...';
+  if (box) {
+    box.appendChild(typingBubble);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  try {
+    const aiResponse = await window.sleepyAI.getAIResponse(promptText);
+    if (typingBubble.parentNode) typingBubble.parentNode.removeChild(typingBubble);
+
     window.sleepyAI.chatHistory.push({
       sender: 'sleepy',
       text: aiResponse,
@@ -1142,7 +1157,15 @@ function sendUserChatMessage(promptText) {
     });
     if (window.Haptics) window.Haptics.success();
     renderChatMessages();
-  }, 350);
+  } catch (err) {
+    if (typingBubble.parentNode) typingBubble.parentNode.removeChild(typingBubble);
+    window.sleepyAI.chatHistory.push({
+      sender: 'sleepy',
+      text: `⚠️ Ошибка ответа ИИ: ${err.message || 'Сбой сети'}. Переключитесь на офлайн-режим при отсутствии интернета.`,
+      time: 'Только что'
+    });
+    renderChatMessages();
+  }
 }
 
 function initSleepyAICoachUI() {
@@ -1173,6 +1196,139 @@ function initSleepyAICoachUI() {
     });
   });
 
+  // AI Mode Switcher (Live LLM vs Offline)
+  const btnLive = document.getElementById('btn-ai-mode-live');
+  const btnOffline = document.getElementById('btn-ai-mode-offline');
+  const statusInd = document.getElementById('ai-status-indicator');
+
+  function updateAIModeUI() {
+    if (!window.sleepyAI) return;
+    const cfg = window.sleepyAI.getConfig();
+    if (btnLive && btnOffline) {
+      if (cfg.mode === 'live') {
+        btnLive.classList.add('active');
+        btnOffline.classList.remove('active');
+      } else {
+        btnOffline.classList.add('active');
+        btnLive.classList.remove('active');
+      }
+    }
+    if (statusInd) {
+      statusInd.textContent = cfg.mode === 'live'
+        ? `● ${cfg.model} (${cfg.isDefaultKey ? 'Tooken Prime' : 'Свой API'}) • Онлайн`
+        : '● Офлайн-движок • Мгновенный ответ';
+      statusInd.style.color = cfg.mode === 'live' ? '#10B981' : '#38BDF8';
+    }
+  }
+
+  if (btnLive) {
+    btnLive.addEventListener('click', () => {
+      window.sleepyAI.saveConfig({ mode: 'live' });
+      updateAIModeUI();
+      if (window.Haptics) window.Haptics.selection();
+    });
+  }
+
+  if (btnOffline) {
+    btnOffline.addEventListener('click', () => {
+      window.sleepyAI.saveConfig({ mode: 'offline' });
+      updateAIModeUI();
+      if (window.Haptics) window.Haptics.selection();
+    });
+  }
+
+  // LLM Settings Modal
+  const btnOpenSettings = document.getElementById('btn-open-ai-settings');
+  const modalSettings = document.getElementById('modal-llm-settings');
+  const btnCloseSettings = document.getElementById('btn-close-ai-settings');
+  const btnSaveSettings = document.getElementById('btn-save-llm-settings');
+  const selectPreset = document.getElementById('select-llm-preset');
+  const selectModel = document.getElementById('select-llm-model');
+  const inputBaseUrl = document.getElementById('input-llm-base-url');
+  const inputApiKey = document.getElementById('input-llm-api-key');
+  const btnToggleVis = document.getElementById('btn-toggle-key-vis');
+  const keyHint = document.getElementById('llm-key-hint');
+
+  if (btnOpenSettings && modalSettings) {
+    btnOpenSettings.addEventListener('click', () => {
+      const cfg = window.sleepyAI.getConfig();
+      if (inputBaseUrl) inputBaseUrl.value = cfg.baseUrl;
+      if (inputApiKey) inputApiKey.value = cfg.isDefaultKey ? '' : cfg.apiKey;
+      if (selectModel) selectModel.value = cfg.model;
+      if (keyHint) {
+        keyHint.textContent = cfg.isDefaultKey 
+          ? '✓ Встроенный ключ Tooken Club Prime активен (свой ключ не требуется)' 
+          : '✓ Сохранен пользовательский API ключ';
+      }
+      modalSettings.style.display = 'flex';
+      if (window.Haptics) window.Haptics.selection();
+    });
+  }
+
+  if (btnCloseSettings && modalSettings) {
+    btnCloseSettings.addEventListener('click', () => {
+      modalSettings.style.display = 'none';
+    });
+    modalSettings.addEventListener('click', (e) => {
+      if (e.target === modalSettings) modalSettings.style.display = 'none';
+    });
+  }
+
+  if (selectPreset) {
+    selectPreset.addEventListener('change', () => {
+      const p = selectPreset.value;
+      if (p === 'tooken_prime') {
+        inputBaseUrl.value = 'https://tooken.club/v1';
+        inputApiKey.value = '';
+        inputApiKey.placeholder = 'Встроенный Tooken Club активен';
+        selectModel.value = 'gpt-6.1-sol';
+        keyHint.textContent = '✓ Встроенный ключ Tooken Club Prime активен (свой ключ не требуется)';
+      } else if (p === 'openrouter') {
+        inputBaseUrl.value = 'https://openrouter.ai/api/v1';
+        inputApiKey.value = '';
+        inputApiKey.placeholder = 'sk-or-v1-...';
+        selectModel.value = 'gpt-4o-mini';
+        keyHint.textContent = 'Введите ваш ключ OpenRouter';
+      } else if (p === 'openai') {
+        inputBaseUrl.value = 'https://api.openai.com/v1';
+        inputApiKey.value = '';
+        inputApiKey.placeholder = 'sk-...';
+        selectModel.value = 'gpt-4o-mini';
+        keyHint.textContent = 'Введите ваш ключ OpenAI';
+      }
+    });
+  }
+
+  if (btnToggleVis && inputApiKey) {
+    btnToggleVis.addEventListener('click', () => {
+      inputApiKey.type = inputApiKey.type === 'password' ? 'text' : 'password';
+    });
+  }
+
+  if (btnSaveSettings) {
+    btnSaveSettings.addEventListener('click', () => {
+      const bUrl = inputBaseUrl ? inputBaseUrl.value.trim() || 'https://tooken.club/v1' : 'https://tooken.club/v1';
+      let key = inputApiKey ? inputApiKey.value.trim() : '';
+      if (!key) {
+        key = window.sleepyAI.DEFAULT_API_KEY;
+      }
+      const mdl = selectModel ? selectModel.value : 'gpt-6.1-sol';
+
+      window.sleepyAI.saveConfig({
+        baseUrl: bUrl,
+        apiKey: key,
+        model: mdl,
+        mode: 'live'
+      });
+
+      updateAIModeUI();
+      if (modalSettings) modalSettings.style.display = 'none';
+      if (window.Haptics) window.Haptics.success();
+      alert('✓ Настройки ИИ успешно сохранены! Слипи работает в режиме Живой LLM.');
+    });
+  }
+
+  updateAIModeUI();
   renderSleepyAICoach();
 }
 

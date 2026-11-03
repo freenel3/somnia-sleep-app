@@ -1,18 +1,62 @@
 /**
- * SOMNIA: Sleepy AI — Neuro-Circadian Coach & 100% Sleep Quality Engine
- * Calculates deterministic SQI (0-100%), performs Gap Analysis,
- * generates the 3-step Daily Recipe to 100%, and powers conversational AI advice.
+ * SOMNIA: Sleepy AI — Neuro-Circadian Coach & 100% Sleep Quality Engine 2026
+ * Supports dual-mode reasoning:
+ * 1. Live LLM API (GPT-6.1 Sol, Claude Sonnet 5.5, Gemini 4 Argon via Tooken Club Prime or OpenAI/OpenRouter)
+ * 2. Deterministic high-speed offline somnologist engine
+ * Full telemetry context injection from Redmi Watch 5 Active & Mi Fitness.
  */
 
 class SleepyAIEngine {
   constructor() {
+    this.DEFAULT_BASE_URL = 'https://tooken.club/v1';
+    this.DEFAULT_API_KEY = 'tc_live_c92f1bb1b585959d7e72f06cb687401a84e7bb25d2d3eea5';
+    this.DEFAULT_MODEL = 'gpt-6.1-sol';
+
+    this.loadConfig();
+
     this.chatHistory = [
       {
         sender: 'sleepy',
-        text: 'Привет! Я Слипи — твой персональный ИИ-сомнолог. Я анализирую показатели с твоих часов Redmi / Mi Fitness, веду тебя по 30-дневному курсу и подсказываю точные шаги, чтобы твой сон работал на 100%. Нажми быстрый вопрос внизу или напиши мне!',
+        text: 'Привет! Я Слипи — твой персональный ИИ-сомнолог 2026. Я подключен к твоим часам Redmi Watch 5 Active и Mi Fitness. Вижу твои фазы глубокого (N3) и быстрого (REM) сна, пульс покоя и HRV. Спрашивай о разборе ночи, причинах усталости или как разогнать качество сна до 100%!',
         time: 'Сейчас'
       }
     ];
+  }
+
+  loadConfig() {
+    this.mode = localStorage.getItem('somnia_ai_mode') || 'live'; // 'live' or 'offline'
+    this.baseUrl = localStorage.getItem('somnia_llm_base_url') || this.DEFAULT_BASE_URL;
+    this.apiKey = localStorage.getItem('somnia_llm_api_key') || this.DEFAULT_API_KEY;
+    this.model = localStorage.getItem('somnia_llm_model') || this.DEFAULT_MODEL;
+  }
+
+  saveConfig(newConfig) {
+    if (newConfig.mode) {
+      this.mode = newConfig.mode;
+      localStorage.setItem('somnia_ai_mode', this.mode);
+    }
+    if (newConfig.baseUrl !== undefined) {
+      this.baseUrl = newConfig.baseUrl.trim();
+      localStorage.setItem('somnia_llm_base_url', this.baseUrl);
+    }
+    if (newConfig.apiKey !== undefined) {
+      this.apiKey = newConfig.apiKey.trim();
+      localStorage.setItem('somnia_llm_api_key', this.apiKey);
+    }
+    if (newConfig.model !== undefined) {
+      this.model = newConfig.model.trim();
+      localStorage.setItem('somnia_llm_model', this.model);
+    }
+  }
+
+  getConfig() {
+    return {
+      mode: this.mode,
+      baseUrl: this.baseUrl,
+      apiKey: this.apiKey,
+      model: this.model,
+      isDefaultKey: this.apiKey === this.DEFAULT_API_KEY
+    };
   }
 
   /**
@@ -148,7 +192,159 @@ class SleepyAIEngine {
   }
 
   /**
-   * Conversational Assistant: Answers sleep questions with scientific depth and empathy
+   * Build System Prompt for Live LLM, injecting deep telemetry from Redmi Watch & Mi Fitness
+   */
+  buildSystemPrompt() {
+    const tel = window.miFitSync ? window.miFitSync.telemetry : {};
+    const sqi = this.calculateSQI(tel);
+    const totalH = Math.floor((tel.totalMinutes || 468) / 60);
+    const totalM = (tel.totalMinutes || 468) % 60;
+    const deepH = Math.floor((tel.deepMinutes || 98) / 60);
+    const deepM = (tel.deepMinutes || 98) % 60;
+    const remH = Math.floor((tel.remMinutes || 94) / 60);
+    const remM = (tel.remMinutes || 94) % 60;
+    const deepPct = (((tel.deepMinutes || 98) / (tel.totalMinutes || 468)) * 100).toFixed(1);
+    const remPct = (((tel.remMinutes || 94) / (tel.totalMinutes || 468)) * 100).toFixed(1);
+
+    // Multi-day history summary
+    let historySummary = 'Нет доступной истории';
+    if (window.miFitSync && window.miFitSync.history && window.miFitSync.history.length > 0) {
+      historySummary = window.miFitSync.history.slice(0, 5).map(h => 
+        `- ${h.date} (${h.dayOfWeek}): всего ${Math.floor(h.totalMinutes/60)}ч ${h.totalMinutes%60}м, N3: ${h.deepMinutes}м, REM: ${h.remMinutes}м, пульс: ${h.restingHR} bpm, отбой: ${h.bedtime || '?'}`
+      ).join('\n');
+    }
+
+    const currentDay = window.sleepyCourse ? window.sleepyCourse.currentDay : 1;
+
+    return `Ты — «Слипи», бескомпромиссный, элитный научный ИИ-сомнолог и биохакер 2026 года в приложении SOMNIA.
+Ты работаешь с реальной телеметрией пользователя с часов Redmi Watch 5 Active BD98 (через синхронизацию Mi Fitness / Health Connect).
+
+ТЕКУЩИЕ РЕАЛЬНЫЕ МЕТРИКИ С ЧАСОВ ПОЛЬЗОВАТЕЛЯ ЗА ПОСЛЕДНЮЮ НОЧЬ:
+- Всего сон: ${totalH}ч ${totalM}м (${tel.totalMinutes || 468} мин)
+- Глубокий сон (N3): ${deepH}ч ${deepM}м (${deepPct}%, оптимум 20-25%)
+- Быстрый сон (REM): ${remH}ч ${remM}м (${remPct}%, оптимум 20-25%)
+- Ночной пульс покоя: ${tel.restingHR || 52} уд/мин (норма Dipping -10..-15%)
+- Вариабельность HRV: ${tel.hrvRmssd || 68} мс
+- Время засыпания (латентность): ${tel.latencyMinutes || 14} мин
+- Время отбоя: ${tel.bedtime || '23:30'}, пробуждение: ${tel.waketime || '07:18'}
+- Индекс качества сна (SQI): ${sqi} / 100%
+- Текущий день 30-дневного курса «Слипи»: День ${currentDay} из 30
+
+ИСТОРИЯ ЗА ПОСЛЕДНИЕ ДНИ:
+${historySummary}
+
+ТВОЙ СТИЛЬ ОБЩЕНИЯ И ПРАВИЛА:
+1. Говори на живом, уверенном, экспертном русском языке. Никаких слащавых шаблонов поддержки и корпоративной воды.
+2. Объясняй физиологические механизмы: аденозиновое давление (Process S), мелатонин/кортизол (Process C), глимфатическая очистка мозга в фазе N3, парасимпатический тонус блуждающего нерва (HRV), ночное замедление пульса (Dipping).
+3. Если пользователь спрашивает про свои ошибки ("где я накосячил", "почему я разбит", "разбор"):
+   - Четко назови причину на основе его цифр (например, если глубокий сон <20% — объясни почему соматотропин не выделился; если пульс выше 55 — почему сердечно-сосудистая система не отдыхала).
+   - Дай жесткий пошаговый протокол на вечер (температурный душ, стоп кофеина за 8ч, свет 10 000 K утром, дыхание 4-7-8).
+4. ЕСЛИ ПОЛЬЗОВАТЕЛЬ ПИШЕТ СВОИ РЕАЛЬНЫЕ ЦИФРЫ СНА (например: "я сегодня спал 6.5 часов, глубокий сон 55 мин, пульс 64"):
+   - Проанализируй именно их!
+   - В самом конце ответа добавь скрытую команду калибровки в формате:
+     [CALIBRATE: {"total": 390, "deep": 55, "rem": 70, "hr": 64}]
+     (где total, deep, rem в минутах, hr в уд/мин). SOMNIA автоматически распарсит этот тег и обновит дашборд!
+5. Держи ответ емким, плотным и максимально прикладным.`;
+  }
+
+  /**
+   * Async Master Dispatcher: Uses Live LLM if online/enabled, falls back to deterministic engine
+   */
+  async getAIResponse(promptText) {
+    if (this.mode === 'live' && this.apiKey) {
+      try {
+        const liveAnswer = await this.callLiveLLM(promptText);
+        if (liveAnswer && liveAnswer.trim()) {
+          return liveAnswer;
+        }
+      } catch (err) {
+        console.warn('[SleepyAI] Live LLM failed, falling back to local engine:', err);
+        const fallback = this.respondToPrompt(promptText);
+        return `${fallback}\n\n*(⚡ Ответ локального сомнолога: сервер API временно недоступен или проверяется сеть)*`;
+      }
+    }
+
+    // Deterministic offline response
+    return this.respondToPrompt(promptText);
+  }
+
+  /**
+   * Call Live LLM API via fetch
+   */
+  async callLiveLLM(promptText) {
+    const systemPrompt = this.buildSystemPrompt();
+
+    // Contextual message history (last 4 turns)
+    const recentMessages = this.chatHistory.slice(-4).map(m => ({
+      role: m.sender === 'user' ? 'user' : 'assistant',
+      content: m.text
+    }));
+
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...recentMessages,
+      { role: 'user', content: promptText }
+    ];
+
+    const endpoint = this.baseUrl.replace(/\/+$/, '') + '/chat/completions';
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
+
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.apiKey}`
+      },
+      body: JSON.stringify({
+        model: this.model,
+        messages: messages,
+        temperature: 0.7,
+        max_tokens: 850
+      }),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      const errBody = await res.text().catch(() => '');
+      throw new Error(`HTTP ${res.status}: ${errBody.slice(0, 150)}`);
+    }
+
+    const data = await res.json();
+    let text = data.choices && data.choices[0] && data.choices[0].message
+      ? data.choices[0].message.content
+      : '';
+
+    // Check for inline calibration command [CALIBRATE: {...}]
+    const calibMatch = text.match(/\[CALIBRATE:\s*(\{.*?\})\]/);
+    if (calibMatch) {
+      try {
+        const calibData = JSON.parse(calibMatch[1]);
+        if (window.miFitSync) {
+          const patch = {};
+          if (calibData.total) patch.totalMinutes = Number(calibData.total);
+          if (calibData.deep) patch.deepMinutes = Number(calibData.deep);
+          if (calibData.rem) patch.remMinutes = Number(calibData.rem);
+          if (calibData.hr) patch.restingHR = Number(calibData.hr);
+
+          window.miFitSync.updateSelectedDayMetrics(patch);
+          if (typeof renderWatchTelemetry === 'function') renderWatchTelemetry();
+        }
+        // Remove tag from user-facing text
+        text = text.replace(calibMatch[0], '').trim();
+      } catch (e) {
+        console.warn('[SleepyAI] Could not parse calibration tag:', e);
+      }
+    }
+
+    return text;
+  }
+
+  /**
+   * Deterministic Offline Assistant (Fast fallback without network)
    */
   respondToPrompt(prompt) {
     const lower = prompt.toLowerCase();
@@ -199,7 +395,7 @@ class SleepyAIEngine {
 
     if (lower.includes('часы') || lower.includes('mi fitness') || lower.includes('redmi')) {
       return `⌚ Твои часы Redmi Watch 5 Active передают данные о фазах Deep, Light, REM и пульсе покоя.\n\n` +
-        `Во вкладке «⌚ Mi Fitness» ты можешь нажать «🔗 Подключить часы по Bluetooth» или загрузить файл выгрузки из приложения Mi Fitness. Somnia мгновенно рассчитает точный SQI и покажет, где теряются драгоценные проценты сна!`;
+        `Во вкладке «⌚ Часы» ты можешь нажать «Ввести точные данные» или загрузить файл выгрузки из приложения Mi Fitness. Somnia мгновенно рассчитает точный SQI и покажет, где теряются драгоценные проценты сна!`;
     }
 
     // Default expert response

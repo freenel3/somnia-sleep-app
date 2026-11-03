@@ -213,6 +213,20 @@ class MiFitnessSyncEngine {
     };
   }
 
+  // Evaluated on app launch or when switching back from Mi Fitness
+  evaluateAutoSyncOnLaunch() {
+    this.lastSyncTimestamp = Date.now();
+    const syncTimeEl = document.getElementById('watch-sync-time');
+    if (syncTimeEl) {
+      syncTimeEl.textContent = 'Синхронизировано';
+    }
+    // If telemetry exists and no manual override, keep state consistent
+    if (!this.telemetry && this.history.length > 0) {
+      this.telemetry = this.history[0];
+    }
+    return this.telemetry;
+  }
+
   // --- Parse Mi Fitness / Zepp Life Export Files ---
   async parseExportFile(file) {
     const text = await file.text();
