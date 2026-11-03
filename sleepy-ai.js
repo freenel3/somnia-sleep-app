@@ -155,6 +155,21 @@ class SleepyAIEngine {
     const tel = window.miFitSync ? window.miFitSync.telemetry : {};
     const sqi = this.calculateSQI(tel);
 
+    if (lower.includes('ошиб') || lower.includes('проеб') || lower.includes('разбор') || lower.includes('почему') || lower.includes('плохо') || lower.includes('разбит') || lower.includes('сон')) {
+      const audit = window.miFitSync ? window.miFitSync.generateBrutalAudit() : null;
+      if (audit) {
+        const mistakesText = audit.mistakes.map(m => "• " + m.tag + ": " + m.title + "\n  " + m.desc).join("\n\n");
+        const winsText = audit.wins.map(w => "• " + w).join("\n");
+        const planText = audit.actionPlan.map(p => "• " + p.step + ": " + p.detail).join("\n");
+
+        return "🔥 Честный разбор твоей ночи (" + (tel.date || 'Сегодня') + "):\n\n" +
+          "📊 Вердикт: " + audit.verdict + "\n\n" +
+          (audit.mistakes.length > 0 ? "❌ Главные ошибки:\n" + mistakesText + "\n\n" : "") +
+          (audit.wins.length > 0 ? "✅ Что сделано правильно:\n" + winsText + "\n\n" : "") +
+          "🎯 Что делать прямо сейчас:\n" + planText;
+      }
+    }
+
     if (lower.includes('100%') || lower.includes('наладить') || lower.includes('план')) {
       return `🎯 Чтобы разогнать твой сон до 100% (сейчас твой расчетный SQI ${sqi}%):\n\n` +
         `1. Оптимизируй температуру: горячий душ за 45 мин до сна + носки для вазодилатации (добавит +25 минут к глубокому сну).\n` +

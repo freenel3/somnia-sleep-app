@@ -901,6 +901,11 @@ function renderWatchTelemetry() {
   if (latencyEl) latencyEl.textContent = `${tel.latencyMinutes} мин`;
   if (totalEl) totalEl.textContent = formatHoursMin(tel.totalMinutes);
   if (deviceEl) deviceEl.textContent = window.miFitSync.deviceName || 'Redmi Watch 5 Active';
+
+  // Render History & Brutal Audit
+  if (typeof renderSleepHistoryChips === 'function') renderSleepHistoryChips();
+  if (typeof renderHistoryChart === 'function') renderHistoryChart();
+  if (typeof renderSleepBrutalAudit === 'function') renderSleepBrutalAudit();
 }
 
 function initMiFitSyncUI() {
@@ -913,6 +918,26 @@ function initMiFitSyncUI() {
       window.miFitSync.setAutoSyncEnabled(e.target.checked);
     });
   }
+  const btn7d = document.getElementById('btn-history-7d');
+  const btn30d = document.getElementById('btn-history-30d');
+
+  if (btn7d && btn30d) {
+    btn7d.addEventListener('click', () => {
+      currentHistoryPeriod = 7;
+      btn7d.classList.add('active');
+      btn30d.classList.remove('active');
+      renderSleepHistoryChips();
+      renderHistoryChart();
+    });
+    btn30d.addEventListener('click', () => {
+      currentHistoryPeriod = 30;
+      btn30d.classList.add('active');
+      btn7d.classList.remove('active');
+      renderSleepHistoryChips();
+      renderHistoryChart();
+    });
+  }
+
   const fileUpload = document.getElementById('file-mifit-upload');
   const btnQuickDemo = document.getElementById('btn-quick-sync-demo');
 
@@ -986,7 +1011,7 @@ function initMiFitSyncUI() {
       const hr = parseInt(document.getElementById('manual-hr')?.value || '52', 10);
 
       const total = h * 60 + m;
-      window.miFitSync.setCustomTelemetry({
+      window.miFitSync.updateSelectedDayMetrics({
         totalMinutes: total,
         deepMinutes: deep,
         remMinutes: rem,
@@ -1149,4 +1174,170 @@ function initSleepyAICoachUI() {
   });
 
   renderSleepyAICoach();
+}
+
+// =====================================================================
+// 14.1 SLEEP HISTORY CAROUSEL & SVG CHART RENDERER
+// =====================================================================
+let currentHistoryPeriod = 7; // 7 or 30
+
+function renderSleepHistoryChips() {
+  const container = document.getElementById('sleep-history-chips');
+  if (!container || !window.miFitSync) return;
+
+  const history = window.miFitSync.history.slice(0, currentHistoryPeriod);
+  const selectedIdx = window.miFitSync.selectedDayIndex;
+
+  container.innerHTML = history.map((day, idx) => {
+    const totalH = (day.totalMinutes / 60).toFixed(1);
+    const isAct = idx === selectedIdx ? 'active' : '';
+    const deepPct = ((day.deepMinutes / day.totalMinutes) * 100);
+    const dotColor = (day.totalMinutes >= 420 && deepPct >= 18) ? '#10B981' : (day.totalMinutes >= 360 ? '#F59E0B' : '#F43F5E');
+
+    return `
+      <div class="history-day-chip ${isAct}" data-day-idx="${idx}">
+        <div class="chip-dow">${day.isToday ? 'Сегодня' : day.dayOfWeek}</div>
+        <div class="chip-num">${day.dayNum}</div>
+        <div class="chip-hours" style="color: ${dotColor};">${totalH}ч</div>
+        <div class="chip-dot" style="background: ${dotColor};"></div>
+      </div>
+    `;
+  }).join('');
+
+  container.querySelectorAll('.history-day-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const idx = parseInt(chip.getAttribute('data-day-idx'), 10);
+      window.miFitSync.selectDay(idx);
+      renderSleepHistoryChips();
+      renderHistoryChart();
+    });
+  });
+}
+
+function renderHistoryChart() {
+  const container = document.getElementById('sleep-history-chart');
+  if (!container || !window.miFitSync) return;
+
+  const history = window.miFitSync.history.slice(0, currentHistoryPeriod).slice().reverse();
+  const selectedDay = window.miFitSync.telemetry;
+
+  const width = Math.max(300, container.clientWidth || 340);
+  const height = 120;
+  const paddingX = 14;
+  const paddingY = 20;
+
+  const maxHours = 9.5;
+  const minHours = 4.0;
+  const barWidth = Math.max(8, Math.min(28, (width - paddingX * 2) / history.length - 4));
+
+  const targetY = height - paddingY - (((7.5 - minHours) / (maxHours - minHours)) * (height - paddingY * 2));
+
+  let barsSvg = '';
+  history.forEach((day, idx) => {
+    const hours = day.totalMinutes / 60;
+    const clampedH = Math.max(minHours, Math.min(maxHours, hours));
+    const barH = ((clampedH - minHours) / (maxHours - minHours)) * (height - paddingY * 2);
+    const x = paddingX + idx * ((width - paddingX * 2) / (history.length - 1 || 1)) - (barWidth / 2);
+    const y = height - paddingY - barH;
+
+    const isSelected = day.date === selectedDay.date;
+    const deepPct = (day.deepMinutes / day.totalMinutes) * 100;
+    const fillColor = isSelected ? '#38BDF8' : (hours >= 7.0 && deepPct >= 18 ? '#10B981' : (hours >= 6.0 ? '#F59E0B' : '#F43F5E'));
+    const strokeAttr = isSelected ? 'stroke="#FFFFFF" stroke-width="2"' : '';
+
+    barsSvg += `
+      <rect x="${x}" y="${y}" width="${barWidth}" height="${barH}" rx="4" fill="${fillColor}" ${strokeAttr} style="cursor: pointer; opacity: ${isSelected ? 1.0 : 0.85};">
+        <title>${day.date}: ${hours.toFixed(1)}ч (Глубокий: ${Math.round(deepPct)}%)</title>
+      </rect>
+      <text x="${x + barWidth/2}" y="${height - 4}" font-size="9" fill="${isSelected ? '#38BDF8' : '#64748B'}" font-weight="${isSelected ? '800' : '500'}" text-anchor="middle">${day.dayNum}</text>
+    `;
+  });
+
+  container.innerHTML = `
+    <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-bottom: 4px; padding: 0 4px;">
+      <span>Цель: 7.5ч сна</span>
+      <span>${currentHistoryPeriod === 7 ? 'Последние 7 ночей' : 'Последние 30 дней'}</span>
+    </div>
+    <svg width="100%" height="${height}" viewBox="0 0 ${width} ${height}" style="overflow: visible;">
+      <!-- Target dashed line -->
+      <line x1="${paddingX}" y1="${targetY}" x2="${width - paddingX}" y2="${targetY}" stroke="rgba(255,255,255,0.25)" stroke-dasharray="3,3" stroke-width="1"/>
+      <text x="${width - paddingX - 2}" y="${targetY - 3}" font-size="8" fill="rgba(255,255,255,0.4)" text-anchor="end">7.5ч</text>
+      ${barsSvg}
+    </svg>
+  `;
+}
+
+// =====================================================================
+// 14.2 BRUTAL AI SLEEP AUDIT ("ГДЕ ТЫ ПРОЕБАЛСЯ") RENDERER
+// =====================================================================
+function renderSleepBrutalAudit() {
+  const container = document.getElementById('brutal-audit-container');
+  if (!container || !window.miFitSync) return;
+
+  const tel = window.miFitSync.telemetry;
+  const audit = window.miFitSync.generateBrutalAudit(tel);
+  const sqi = window.sleepyAI ? window.sleepyAI.calculateSQI(tel) : 78;
+
+  container.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 24px;">🔥</span>
+        <div>
+          <h3 style="font-size: 16px; font-weight: 800; color: #FFFFFF; margin: 0;">Честный разбор сна от Слипи</h3>
+          <div style="font-size: 11px; color: #F43F5E; font-weight: 700;">Ночь: ${tel.date} (${tel.bedtime || '23:30'} → ${tel.waketime || '07:15'})</div>
+        </div>
+      </div>
+      <span style="font-size: 11px; background: rgba(244, 63, 94, 0.2); color: #FDA4AF; border: 1px solid rgba(244, 63, 94, 0.4); padding: 4px 10px; border-radius: 8px; font-weight: 800;">
+        SQI: ${sqi}%
+      </span>
+    </div>
+
+    <div style="background: rgba(244, 63, 94, 0.12); border-left: 3px solid #F43F5E; padding: 10px 12px; border-radius: 8px; font-size: 12.5px; font-weight: 700; color: #FECDD3; margin-bottom: 14px; line-height: 1.4;">
+      ${audit.verdict}
+    </div>
+
+    <!-- Где ты проебался -->
+    <div style="margin-bottom: 14px;">
+      <div style="font-size: 12px; font-weight: 800; color: #F87171; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+        ❌ Где ты ошибся прошлой ночью:
+      </div>
+      ${audit.mistakes.length === 0 ? '<div style="font-size: 12px; color: #34D399;">Критичных ошибок нет. Отличная дисциплина сна!</div>' : 
+        audit.mistakes.map(m => `
+          <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(248, 113, 113, 0.25); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <span style="font-size: 10px; font-weight: 800; color: #F87171; background: rgba(248, 113, 113, 0.15); padding: 2px 6px; border-radius: 4px;">${m.tag}</span>
+              <span style="font-size: 12px; font-weight: 700; color: #FFFFFF;">${m.title}</span>
+            </div>
+            <div style="font-size: 11.5px; color: var(--text-secondary); line-height: 1.45;">${m.desc}</div>
+          </div>
+        `).join('')
+      }
+    </div>
+
+    <!-- Что было сделано правильно -->
+    ${audit.wins.length > 0 ? `
+    <div style="margin-bottom: 14px;">
+      <div style="font-size: 12px; font-weight: 800; color: #34D399; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">
+        ✅ Что было сделано по уму:
+      </div>
+      <div style="font-size: 11.5px; color: #A7F3D0; line-height: 1.5; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px; padding: 8px 12px;">
+        ${audit.wins.map(w => `<div style="margin-bottom: 2px;">${w}</div>`).join('')}
+      </div>
+    </div>
+    ` : ''}
+
+    <!-- Чёткий план действий на сегодня -->
+    <div>
+      <div style="font-size: 12px; font-weight: 800; color: #38BDF8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+        🎯 Твой четкий план на сегодня (Без воды):
+      </div>
+      <div style="display: grid; gap: 6px;">
+        ${audit.actionPlan.map(p => `
+          <div style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 8px; padding: 8px 10px; font-size: 11.5px; line-height: 1.4;">
+            <span style="font-weight: 800; color: #38BDF8;">${p.step}:</span> <span style="color: var(--text-secondary);">${p.detail}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
 }

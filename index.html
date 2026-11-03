@@ -10,8 +10,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Somnia">
-  <link rel="stylesheet" href="styles.css?v=2026.13">
-  <link rel="manifest" href="manifest.json?v=2026.13">
+  <link rel="stylesheet" href="styles.css?v=2026.14">
+  <link rel="manifest" href="manifest.json?v=2026.14">
   <script>
     // Somnia 2026 Cache Auto-Purge: forces Android Chrome to flush stale cache on update
     const SOMNIA_BUILD = '2026.10.1';
@@ -514,6 +514,35 @@
           <span style="font-size: 10px; color: #38BDF8;">5 полных циклов (90м)</span>
         </div>
       </div>
+
+      <!-- MULTI-DAY SLEEP HISTORY (7 DAYS / 30 DAYS) -->
+      <div class="content-card" style="padding: 18px 16px; margin-top: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+          <div>
+            <div style="font-size: 11px; color: var(--accent-cyan); font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Телеметрия Mi Fitness & HyperOS</div>
+            <h3 style="font-size: 17px; font-weight: 800; color: #FFFFFF; margin-top: 2px;">📅 История и Тренды Сна</h3>
+          </div>
+          <div style="display: flex; gap: 6px;">
+            <button id="btn-history-7d" class="chip-btn active" style="font-size: 11px; padding: 6px 12px; font-weight: 700;">7 Ночей</button>
+            <button id="btn-history-30d" class="chip-btn" style="font-size: 11px; padding: 6px 12px; font-weight: 700;">30 Дней</button>
+          </div>
+        </div>
+
+        <!-- Scrollable Day Chips Carousel -->
+        <div id="sleep-history-chips" class="history-chips-row">
+          <!-- Populated by renderSleepHistoryChips() -->
+        </div>
+
+        <!-- SVG Trend Chart Container -->
+        <div id="sleep-history-chart" style="margin-top: 12px; background: rgba(0,0,0,0.3); border-radius: 12px; padding: 12px 6px; border: 1px solid rgba(255,255,255,0.06);">
+          <!-- Populated by renderHistoryChart() -->
+        </div>
+      </div>
+
+      <!-- BRUTAL AI SLEEP AUDIT ("ГДЕ ТЫ ПРОЕБАЛСЯ") -->
+      <div id="brutal-audit-container" class="content-card" style="background: linear-gradient(135deg, rgba(30, 27, 75, 0.45), rgba(15, 23, 42, 0.7)); border: 1px solid rgba(244, 63, 94, 0.35); padding: 18px 16px; margin-top: 14px;">
+        <!-- Populated by renderSleepBrutalAudit() -->
+      </div>
     </section>
 
     
@@ -878,15 +907,15 @@
     </div>
   </div>
 
-  <script src="audio-engine.js?v=2026.13"></script>
-  <script src="sleep-engine.js?v=2026.13"></script>
-  <script src="argon-modules.js?v=2026.13"></script>
-  <script src="breathwork.js?v=2026.13"></script>
-  <script src="tracker.js?v=2026.13"></script>
-  <script src="sleepy-course.js?v=2026.13"></script>
-  <script src="mifit-sync.js?v=2026.13"></script>
-  <script src="sleepy-ai.js?v=2026.13"></script>
-  <script src="app.js?v=2026.13"></script>
+  <script src="audio-engine.js?v=2026.14"></script>
+  <script src="sleep-engine.js?v=2026.14"></script>
+  <script src="argon-modules.js?v=2026.14"></script>
+  <script src="breathwork.js?v=2026.14"></script>
+  <script src="tracker.js?v=2026.14"></script>
+  <script src="sleepy-course.js?v=2026.14"></script>
+  <script src="mifit-sync.js?v=2026.14"></script>
+  <script src="sleepy-ai.js?v=2026.14"></script>
+  <script src="app.js?v=2026.14"></script>
   <script>
     // Register Service Worker for 100% Offline PWA Mode
     if ('serviceWorker' in navigator) {
