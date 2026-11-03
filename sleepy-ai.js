@@ -258,7 +258,8 @@ ${historySummary}
    - В самом конце ответа добавь скрытую команду калибровки в формате:
      [CALIBRATE: {"total": 390, "deep": 55, "rem": 70, "hr": 64}]
      (где total, deep, rem в минутах, hr в уд/мин). SOMNIA автоматически распарсит этот тег и обновит дашборд!
-5. Держи ответ емким, плотным и максимально прикладным.`;
+5. Держи ответ емким, плотным и максимально прикладным.
+6. СТРОЖАЙШЕЕ ПРАВИЛО: НИ В КОЕМ СЛУЧАЕ не выводи свои внутренние мысли на английском языке (никаких 'Analyze User Input', 'Thinking Process', 'I need to act as'). Твой ответ должен С САМОГО ПЕРВОГО СИМВОЛА быть на русском языке и сразу адресован пользователю!`;
   }
 
   /**
@@ -367,12 +368,28 @@ ${historySummary}
       }
     }
 
-    // Strip internal thinking tags and English reasoning scratchpads
+    // Strip internal thinking tags
     text = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
-    if (text.startsWith("Here's a thinking process") || text.includes("**Analyze User Input:**")) {
-      const ruPos = text.search(/[А-Яа-яЁё]/);
-      if (ruPos > 0) {
-        text = text.substring(ruPos).trim();
+
+    // Strip any English reasoning / analyze scratchpads
+    if (text.includes('Analyze User Input') || text.includes('Thinking Process') || text.startsWith("Here's a thinking process") || /User asks:/i.test(text)) {
+      const matchResp = text.match(/(?:(?:\*\*Draft Response.*?\*\*|\*\*Response:\*\*|### Ответ|Ответ:|Слипи:)\s*)([\s\S]*)/i);
+      if (matchResp && matchResp[1] && matchResp[1].trim()) {
+        text = matchResp[1].trim();
+      } else {
+        const paras = text.split(/\n\s*\n/);
+        const filtered = paras.filter(p => {
+          const cyrillic = (p.match(/[а-яА-ЯёЁ]/g) || []).length;
+          const latin = (p.match(/[a-zA-Z]/g) || []).length;
+          const hasCoTKeywords = /analyze user|thinking process|strategy|system prompt|user asks|act as/i.test(p);
+          return cyrillic > 15 && cyrillic > latin && !hasCoTKeywords;
+        });
+        if (filtered.length > 0) {
+          text = filtered.join('\n\n').trim();
+        } else {
+          console.warn('[SleepyAI] Filtered out pure CoT reasoning, falling back to local engine.');
+          text = this.respondToPrompt(promptText);
+        }
       }
     }
 

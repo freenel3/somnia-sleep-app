@@ -903,6 +903,34 @@ function renderWatchTelemetry() {
   if (deviceEl) deviceEl.textContent = window.miFitSync.deviceName || 'Redmi Watch 5 Active';
 
   // Render History & Brutal Audit
+  const badgeEl = document.getElementById('history-provenance-badge');
+  if (badgeEl && window.miFitSync) {
+    if (window.miFitSync.isDemo) {
+      badgeEl.innerHTML = `
+        <div style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #F59E0B; gap: 8px;">
+          <div>
+            <b>⚠️ Демо-шаблон (30 калибровочных ночей)</b><br>
+            <span style="color: rgba(255,255,255,0.7); font-size: 10px;">Дни без записи заполнены макетом. Нажмите <b>«📂 Файл Mi Fitness»</b> выше для вашей настоящей истории!</span>
+          </div>
+          <button id="btn-clear-demo" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 10px; white-space: nowrap; font-weight: 600;">Очистить демо</button>
+        </div>
+      `;
+      const btnClear = document.getElementById('btn-clear-demo');
+      if (btnClear) {
+        btnClear.onclick = () => {
+          window.miFitSync.clearDemoHistory();
+          renderWatchTelemetry();
+        };
+      }
+    } else {
+      badgeEl.innerHTML = `
+        <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 6px 12px; margin-bottom: 12px; font-size: 11px; color: #10B981;">
+          ✓ <b>Реальная история Mi Fitness</b> (${window.miFitSync.history.length} ночей из вашего профиля)
+        </div>
+      `;
+    }
+  }
+
   if (typeof renderSleepHistoryChips === 'function') renderSleepHistoryChips();
   if (typeof renderHistoryChart === 'function') renderHistoryChart();
   if (typeof renderSleepBrutalAudit === 'function') renderSleepBrutalAudit();
@@ -1348,16 +1376,17 @@ function renderSleepHistoryChips() {
   const selectedIdx = window.miFitSync.selectedDayIndex;
 
   container.innerHTML = history.map((day, idx) => {
-    const totalH = (day.totalMinutes / 60).toFixed(1);
     const isAct = idx === selectedIdx ? 'active' : '';
-    const deepPct = ((day.deepMinutes / day.totalMinutes) * 100);
-    const dotColor = (day.totalMinutes >= 420 && deepPct >= 18) ? '#10B981' : (day.totalMinutes >= 360 ? '#F59E0B' : '#F43F5E');
+    const isMissing = !day.totalMinutes || day.totalMinutes === 0;
+    const totalH = isMissing ? '--' : (day.totalMinutes / 60).toFixed(1);
+    const deepPct = isMissing ? 0 : ((day.deepMinutes / day.totalMinutes) * 100);
+    const dotColor = isMissing ? '#64748B' : ((day.totalMinutes >= 420 && deepPct >= 18) ? '#10B981' : (day.totalMinutes >= 360 ? '#F59E0B' : '#F43F5E'));
 
     return `
-      <div class="history-day-chip ${isAct}" data-day-idx="${idx}">
+      <div class="history-day-chip ${isAct}" data-day-idx="${idx}" title="${isMissing ? 'Нет записи / часы не надеты' : ''}">
         <div class="chip-dow">${day.isToday ? 'Сегодня' : day.dayOfWeek}</div>
         <div class="chip-num">${day.dayNum}</div>
-        <div class="chip-hours" style="color: ${dotColor};">${totalH}ч</div>
+        <div class="chip-hours" style="color: ${dotColor};">${isMissing ? '--:--' : totalH + 'ч'}</div>
         <div class="chip-dot" style="background: ${dotColor};"></div>
       </div>
     `;
@@ -1393,20 +1422,21 @@ function renderHistoryChart() {
 
   let barsSvg = '';
   history.forEach((day, idx) => {
-    const hours = day.totalMinutes / 60;
-    const clampedH = Math.max(minHours, Math.min(maxHours, hours));
-    const barH = ((clampedH - minHours) / (maxHours - minHours)) * (height - paddingY * 2);
+    const isMissing = !day.totalMinutes || day.totalMinutes === 0;
+    const hours = isMissing ? 0 : day.totalMinutes / 60;
+    const clampedH = isMissing ? minHours : Math.max(minHours, Math.min(maxHours, hours));
+    const barH = isMissing ? 4 : ((clampedH - minHours) / (maxHours - minHours)) * (height - paddingY * 2);
     const x = paddingX + idx * ((width - paddingX * 2) / (history.length - 1 || 1)) - (barWidth / 2);
     const y = height - paddingY - barH;
 
     const isSelected = day.date === selectedDay.date;
-    const deepPct = (day.deepMinutes / day.totalMinutes) * 100;
-    const fillColor = isSelected ? '#38BDF8' : (hours >= 7.0 && deepPct >= 18 ? '#10B981' : (hours >= 6.0 ? '#F59E0B' : '#F43F5E'));
-    const strokeAttr = isSelected ? 'stroke="#FFFFFF" stroke-width="2"' : '';
+    const deepPct = isMissing ? 0 : (day.deepMinutes / day.totalMinutes) * 100;
+    const fillColor = isMissing ? '#334155' : (isSelected ? '#38BDF8' : (hours >= 7.0 && deepPct >= 18 ? '#10B981' : (hours >= 6.0 ? '#F59E0B' : '#F43F5E')));
+    const strokeAttr = isSelected ? 'stroke="#FFFFFF" stroke-width="2"' : (isMissing ? 'stroke="#475569" stroke-width="1" stroke-dasharray="2,2"' : '');
 
     barsSvg += `
-      <rect x="${x}" y="${y}" width="${barWidth}" height="${barH}" rx="4" fill="${fillColor}" ${strokeAttr} style="cursor: pointer; opacity: ${isSelected ? 1.0 : 0.85};">
-        <title>${day.date}: ${hours.toFixed(1)}ч (Глубокий: ${Math.round(deepPct)}%)</title>
+      <rect x="${x}" y="${y}" width="${barWidth}" height="${barH}" rx="3" fill="${fillColor}" ${strokeAttr} style="cursor: pointer; opacity: ${isSelected ? 1.0 : 0.85};">
+        <title>${day.date}: ${isMissing ? 'Нет записи' : hours.toFixed(1) + 'ч'}</title>
       </rect>
       <text x="${x + barWidth/2}" y="${height - 4}" font-size="9" fill="${isSelected ? '#38BDF8' : '#64748B'}" font-weight="${isSelected ? '800' : '500'}" text-anchor="middle">${day.dayNum}</text>
     `;

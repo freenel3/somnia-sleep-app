@@ -74,10 +74,13 @@ class MiFitnessSyncEngine {
   loadState() {
     try {
       const savedHistory = localStorage.getItem('somnia_sleep_history_v2');
+      const hasRealFile = localStorage.getItem('somnia_sleep_has_real_file') === 'true';
       if (savedHistory) {
         this.history = JSON.parse(savedHistory);
+        this.isDemo = !hasRealFile;
       } else {
         this.history = this.getSeedHistory();
+        this.isDemo = true;
         this.saveHistory();
       }
 
@@ -86,8 +89,36 @@ class MiFitnessSyncEngine {
     } catch (e) {
       console.warn('[MiFitSync] Could not load history, using seed:', e);
       this.history = this.getSeedHistory();
+      this.isDemo = true;
       this.telemetry = this.history[0];
     }
+  }
+
+  clearDemoHistory() {
+    this.history = [{
+      id: `manual_${Date.now()}`,
+      date: new Date().toISOString().split('T')[0],
+      dayOfWeek: 'Сегодня',
+      dayNum: new Date().getDate(),
+      monthName: '',
+      isToday: true,
+      totalMinutes: 0,
+      deepMinutes: 0,
+      remMinutes: 0,
+      lightMinutes: 0,
+      awakeMinutes: 0,
+      restingHR: 0,
+      hrvRmssd: 0,
+      bedtime: '--:--',
+      waketime: '--:--',
+      latencyMinutes: 0,
+      source: 'MANUAL_EMPTY'
+    }];
+    this.isDemo = false;
+    localStorage.removeItem('somnia_sleep_has_real_file');
+    this.selectedDayIndex = 0;
+    this.telemetry = this.history[0];
+    this.saveHistory();
   }
 
   saveHistory() {
@@ -280,6 +311,8 @@ class MiFitnessSyncEngine {
       }));
       this.selectedDayIndex = 0;
       this.telemetry = this.history[0];
+      this.isDemo = false;
+      localStorage.setItem('somnia_sleep_has_real_file', 'true');
       this.saveHistory();
     }
     return this.history;
