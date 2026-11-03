@@ -1215,7 +1215,7 @@ function initSleepyAICoachUI() {
     }
     if (statusInd) {
       const modelDisplayName = (cfg.model && cfg.model.includes('nemotron'))
-        ? 'Nemotron 3.5 Super'
+        ? 'Nemotron 3.5'
         : ((cfg.model && cfg.model.includes('gpt-6')) ? 'GPT-6.1 Sol' : (cfg.model || 'ИИ-Сомнолог'));
       statusInd.textContent = cfg.mode === 'live'
         ? `● ${modelDisplayName} • Онлайн`

@@ -327,7 +327,8 @@ ${historySummary}
         model: modelToUse,
         messages: messages,
         temperature: 0.7,
-        max_tokens: 2048
+        max_tokens: 2048,
+        reasoning: { exclude: true }
       }),
       signal: controller.signal
     });
@@ -341,7 +342,8 @@ ${historySummary}
           model: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
           messages: messages,
           temperature: 0.7,
-          max_tokens: 1500
+          max_tokens: 1500,
+          reasoning: { exclude: true }
         }),
         signal: controller.signal
       });
@@ -361,8 +363,16 @@ ${historySummary}
       if (msg.content && msg.content.trim()) {
         text = msg.content;
       } else if (msg.reasoning && msg.reasoning.trim()) {
-        // Fallback to reasoning output if content was omitted by API
         text = msg.reasoning;
+      }
+    }
+
+    // Strip internal thinking tags and English reasoning scratchpads
+    text = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+    if (text.startsWith("Here's a thinking process") || text.includes("**Analyze User Input:**")) {
+      const ruPos = text.search(/[А-Яа-яЁё]/);
+      if (ruPos > 0) {
+        text = text.substring(ruPos).trim();
       }
     }
 
