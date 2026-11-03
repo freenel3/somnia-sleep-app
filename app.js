@@ -1214,8 +1214,11 @@ function initSleepyAICoachUI() {
       }
     }
     if (statusInd) {
+      const modelDisplayName = (cfg.model && cfg.model.includes('nemotron'))
+        ? 'Nemotron 3.5 Super'
+        : ((cfg.model && cfg.model.includes('gpt-6')) ? 'GPT-6.1 Sol' : (cfg.model || 'ИИ-Сомнолог'));
       statusInd.textContent = cfg.mode === 'live'
-        ? `● ${cfg.model} (${cfg.isDefaultKey ? 'Tooken Prime' : 'Свой API'}) • Онлайн`
+        ? `● ${modelDisplayName} • Онлайн`
         : '● Офлайн-движок • Мгновенный ответ';
       statusInd.style.color = cfg.mode === 'live' ? '#10B981' : '#38BDF8';
     }
@@ -1277,18 +1280,18 @@ function initSleepyAICoachUI() {
   if (selectPreset) {
     selectPreset.addEventListener('change', () => {
       const p = selectPreset.value;
-      if (p === 'tooken_prime') {
-        inputBaseUrl.value = 'https://tooken.club/v1';
+      if (p === 'openrouter_fleet' || p === 'tooken_prime') {
+        inputBaseUrl.value = 'https://openrouter.ai/api/v1';
         inputApiKey.value = '';
-        inputApiKey.placeholder = 'Встроенный Tooken Club активен';
-        selectModel.value = 'gpt-6.1-sol';
-        keyHint.textContent = '✓ Встроенный ключ Tooken Club Prime активен (свой ключ не требуется)';
-      } else if (p === 'openrouter') {
+        inputApiKey.placeholder = 'Встроенный OpenRouter активен';
+        selectModel.value = 'nvidia/nemotron-3.5-super-vl:free';
+        keyHint.textContent = '✓ Встроенный безлимитный доступ OpenRouter активен';
+      } else if (p === 'openrouter_custom') {
         inputBaseUrl.value = 'https://openrouter.ai/api/v1';
         inputApiKey.value = '';
         inputApiKey.placeholder = 'sk-or-v1-...';
-        selectModel.value = 'gpt-4o-mini';
-        keyHint.textContent = 'Введите ваш ключ OpenRouter';
+        selectModel.value = 'nvidia/nemotron-3.5-super-vl:free';
+        keyHint.textContent = 'Введите ваш персональный ключ OpenRouter';
       } else if (p === 'openai') {
         inputBaseUrl.value = 'https://api.openai.com/v1';
         inputApiKey.value = '';

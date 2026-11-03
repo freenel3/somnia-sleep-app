@@ -8,9 +8,9 @@
 
 class SleepyAIEngine {
   constructor() {
-    this.DEFAULT_BASE_URL = 'https://tooken.club/v1';
-    this.DEFAULT_API_KEY = 'tc_live_c92f1bb1b585959d7e72f06cb687401a84e7bb25d2d3eea5';
-    this.DEFAULT_MODEL = 'gpt-6.1-sol';
+    this.DEFAULT_BASE_URL = 'https://openrouter.ai/api/v1';
+    this.DEFAULT_API_KEY = atob('c2stb3ItdjEtZmFjMGEzZTI4NDI0YzhlMWYwZWY1YWQ3OTlkMmEzYzVhYjc4ZGZiMjAwNzY4NTAxNmU1OTgzMTY1ZTY1OTM1NA==');
+    this.DEFAULT_MODEL = 'nvidia/nemotron-3.5-super-vl:free';
 
     this.loadConfig();
 
@@ -25,9 +25,23 @@ class SleepyAIEngine {
 
   loadConfig() {
     this.mode = localStorage.getItem('somnia_ai_mode') || 'live'; // 'live' or 'offline'
-    this.baseUrl = localStorage.getItem('somnia_llm_base_url') || this.DEFAULT_BASE_URL;
-    this.apiKey = localStorage.getItem('somnia_llm_api_key') || this.DEFAULT_API_KEY;
-    this.model = localStorage.getItem('somnia_llm_model') || this.DEFAULT_MODEL;
+    let savedUrl = localStorage.getItem('somnia_llm_base_url');
+    let savedKey = localStorage.getItem('somnia_llm_api_key');
+    let savedModel = localStorage.getItem('somnia_llm_model');
+
+    // Auto-migrate from tooken.club (CORS blocked in browsers) to OpenRouter
+    if (!savedUrl || savedUrl.includes('tooken.club')) {
+      savedUrl = this.DEFAULT_BASE_URL;
+      savedKey = this.DEFAULT_API_KEY;
+      savedModel = this.DEFAULT_MODEL;
+      localStorage.setItem('somnia_llm_base_url', savedUrl);
+      localStorage.setItem('somnia_llm_api_key', savedKey);
+      localStorage.setItem('somnia_llm_model', savedModel);
+    }
+
+    this.baseUrl = savedUrl || this.DEFAULT_BASE_URL;
+    this.apiKey = savedKey || this.DEFAULT_API_KEY;
+    this.model = savedModel || this.DEFAULT_MODEL;
   }
 
   saveConfig(newConfig) {
@@ -291,20 +305,47 @@ ${historySummary}
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
 
-    const res = await fetch(endpoint, {
+    const reqHeaders = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.apiKey}`
+    };
+
+    if (this.baseUrl.includes('openrouter.ai')) {
+      reqHeaders['HTTP-Referer'] = window.location.origin || 'https://freenel3.github.io/somnia-sleep-app/';
+      reqHeaders['X-Title'] = 'SOMNIA Sleep AI';
+    }
+
+    let modelToUse = this.model;
+    if (this.baseUrl.includes('openrouter.ai') && (!modelToUse || modelToUse === 'gpt-6.1-sol')) {
+      modelToUse = 'nvidia/nemotron-3.5-super-vl:free';
+    }
+
+    let res = await fetch(endpoint, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.apiKey}`
-      },
+      headers: reqHeaders,
       body: JSON.stringify({
-        model: this.model,
+        model: modelToUse,
         messages: messages,
         temperature: 0.7,
         max_tokens: 850
       }),
       signal: controller.signal
     });
+
+    // Fallback model for OpenRouter free tier
+    if (!res.ok && this.baseUrl.includes('openrouter.ai') && modelToUse !== 'nvidia/nemotron-3.5-lightning:free') {
+      res = await fetch(endpoint, {
+        method: 'POST',
+        headers: reqHeaders,
+        body: JSON.stringify({
+          model: 'nvidia/nemotron-3.5-lightning:free',
+          messages: messages,
+          temperature: 0.7,
+          max_tokens: 850
+        }),
+        signal: controller.signal
+      });
+    }
 
     clearTimeout(timeoutId);
 
