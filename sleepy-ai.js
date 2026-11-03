@@ -10,7 +10,7 @@ class SleepyAIEngine {
   constructor() {
     this.DEFAULT_BASE_URL = 'https://openrouter.ai/api/v1';
     this.DEFAULT_API_KEY = atob('c2stb3ItdjEtZmFjMGEzZTI4NDI0YzhlMWYwZWY1YWQ3OTlkMmEzYzVhYjc4ZGZiMjAwNzY4NTAxNmU1OTgzMTY1ZTY1OTM1NA==');
-    this.DEFAULT_MODEL = 'nvidia/nemotron-3.5-super-vl:free';
+    this.DEFAULT_MODEL = 'nvidia/nemotron-3.5-lightning:free';
 
     this.loadConfig();
 
@@ -233,7 +233,7 @@ class SleepyAIEngine {
     return `Ты — «Слипи», бескомпромиссный, элитный научный ИИ-сомнолог и биохакер 2026 года в приложении SOMNIA.
 Ты работаешь с реальной телеметрией пользователя с часов Redmi Watch 5 Active BD98 (через синхронизацию Mi Fitness / Health Connect).
 
-ТЕКУЩИЕ РЕАЛЬНЫЕ МЕТРИКИ С ЧАСОВ ПОЛЬЗОВАТЕЛЯ ЗА ПОСЛЕДНЮЮ НОЧЬ:
+ВЫБРАННАЯ НОЧЬ ДЛЯ АНАЛИЗА: ${tel.date || 'Сегодня'} (${tel.dayOfWeek || ''})
 - Всего сон: ${totalH}ч ${totalM}м (${tel.totalMinutes || 468} мин)
 - Глубокий сон (N3): ${deepH}ч ${deepM}м (${deepPct}%, оптимум 20-25%)
 - Быстрый сон (REM): ${remH}ч ${remM}м (${remPct}%, оптимум 20-25%)
@@ -303,7 +303,7 @@ ${historySummary}
     const endpoint = this.baseUrl.replace(/\/+$/, '') + '/chat/completions';
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 50000); // 50s timeout for reasoning models
 
     const reqHeaders = {
       'Content-Type': 'application/json',
@@ -316,8 +316,8 @@ ${historySummary}
     }
 
     let modelToUse = this.model;
-    if (this.baseUrl.includes('openrouter.ai') && (!modelToUse || modelToUse === 'gpt-6.1-sol')) {
-      modelToUse = 'nvidia/nemotron-3.5-super-vl:free';
+    if (this.baseUrl.includes('openrouter.ai') && (!modelToUse || modelToUse === 'gpt-6.1-sol' || modelToUse.includes('super-vl'))) {
+      modelToUse = 'nvidia/nemotron-3.5-lightning:free';
     }
 
     let res = await fetch(endpoint, {
@@ -327,21 +327,21 @@ ${historySummary}
         model: modelToUse,
         messages: messages,
         temperature: 0.7,
-        max_tokens: 850
+        max_tokens: 2048
       }),
       signal: controller.signal
     });
 
     // Fallback model for OpenRouter free tier
-    if (!res.ok && this.baseUrl.includes('openrouter.ai') && modelToUse !== 'nvidia/nemotron-3.5-lightning:free') {
+    if (!res.ok && this.baseUrl.includes('openrouter.ai')) {
       res = await fetch(endpoint, {
         method: 'POST',
         headers: reqHeaders,
         body: JSON.stringify({
-          model: 'nvidia/nemotron-3.5-lightning:free',
+          model: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
           messages: messages,
           temperature: 0.7,
-          max_tokens: 850
+          max_tokens: 1500
         }),
         signal: controller.signal
       });
@@ -355,9 +355,16 @@ ${historySummary}
     }
 
     const data = await res.json();
-    let text = data.choices && data.choices[0] && data.choices[0].message
-      ? data.choices[0].message.content
-      : '';
+    const msg = data.choices && data.choices[0] && data.choices[0].message;
+    let text = '';
+    if (msg) {
+      if (msg.content && msg.content.trim()) {
+        text = msg.content;
+      } else if (msg.reasoning && msg.reasoning.trim()) {
+        // Fallback to reasoning output if content was omitted by API
+        text = msg.reasoning;
+      }
+    }
 
     // Check for inline calibration command [CALIBRATE: {...}]
     const calibMatch = text.match(/\[CALIBRATE:\s*(\{.*?\})\]/);
