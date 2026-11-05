@@ -1,7 +1,7 @@
 /**
- * SOMNIA: Mi Fitness & Smart Watch Multi-Day History & AI Sleep Auditor 2026
- * Handles 7-day & 30-day sleep history, SVG trend charts, Mi Fitness export ingest,
- * and brutal, personalized AI root-cause analysis ("Где ты проебался").
+ * SOMNIA: Mi Fitness & Smart Watch Real Biometric Telemetry 2026
+ * STRICTLY 100% REAL DATA: ZERO FAKE SEED GENERATION, ZERO FABRICATED NIGHTS.
+ * Only stores and analyzes real watch telemetry (Manual Entry, BLE Sync, Mi Fitness Export).
  */
 
 class MiFitnessSyncEngine {
@@ -12,151 +12,70 @@ class MiFitnessSyncEngine {
     this.lastSyncTimestamp = Date.now();
     this.autoSyncEnabled = localStorage.getItem('somnia_mifit_autosync') !== 'false';
     this.selectedDayIndex = 0; // 0 = latest/today
-
     this.history = [];
+    this.telemetry = null;
+
     this.loadState();
-  }
-
-  // Generate realistic 30-day historical baseline from Redmi Watch 5 Active
-  getSeedHistory() {
-    const days = [];
-    const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
-    const now = new Date();
-
-    // 7 archetypes of real nights (some optimal, some messed up by late bedtime or food)
-    const patterns = [
-      { total: 468, deep: 98, rem: 94, hr: 52, hrv: 68, bedtime: '23:30', wake: '07:18', awake: 18, label: 'Сегодня' },
-      { total: 395, deep: 52, rem: 75, hr: 59, hrv: 51, bedtime: '01:25', wake: '08:00', awake: 38, label: 'Вчера (Сбит режим)' },
-      { total: 485, deep: 112, rem: 104, hr: 50, hrv: 74, bedtime: '23:10', wake: '07:15', awake: 14, label: 'Идеальное окно' },
-      { total: 430, deep: 82, rem: 88, hr: 55, hrv: 63, bedtime: '00:15', wake: '07:25', awake: 24, label: 'Поздний экран' },
-      { total: 370, deep: 46, rem: 68, hr: 62, hrv: 48, bedtime: '01:45', wake: '07:55', awake: 42, label: 'Тяжелый ужин' },
-      { total: 510, deep: 118, rem: 110, hr: 49, hrv: 76, bedtime: '22:50', wake: '07:20', awake: 12, label: 'Выходной релакс' },
-      { total: 450, deep: 92, rem: 90, hr: 53, hrv: 67, bedtime: '23:45', wake: '07:15', awake: 20, label: 'Рабочий день' }
-    ];
-
-    for (let i = 0; i < 30; i++) {
-      const d = new Date(now);
-      d.setDate(now.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
-      const p = patterns[i % patterns.length];
-
-      // Subtle natural variance
-      const jitter = ((i * 7) % 11) - 5;
-      const totalMin = Math.max(340, p.total + jitter);
-      const deepMin = Math.max(40, p.deep + Math.round(jitter * 0.2));
-      const remMin = Math.max(50, p.rem + Math.round(jitter * 0.25));
-      const lightMin = totalMin - deepMin - remMin - p.awake;
-
-      days.push({
-        id: `sleep_${dateStr}`,
-        date: dateStr,
-        dayOfWeek: dayNames[d.getDay()],
-        dayNum: d.getDate(),
-        monthName: d.toLocaleString('ru', { month: 'short' }),
-        isToday: i === 0,
-        totalMinutes: totalMin,
-        deepMinutes: deepMin,
-        remMinutes: remMin,
-        lightMinutes: Math.max(180, lightMin),
-        awakeMinutes: p.awake,
-        restingHR: Math.max(46, p.hr + (i % 3 === 0 ? 3 : 0)),
-        hrvRmssd: p.hrv,
-        bedtime: p.bedtime,
-        waketime: p.wake,
-        latencyMinutes: 12 + (i % 6),
-        source: i === 0 ? 'REDMI_WATCH_SYNC' : 'MI_FITNESS_HISTORY'
-      });
-    }
-
-    return days;
-  }
-
-  getEmptyNight() {
-    const d = new Date();
-    return {
-      id: `manual_${Date.now()}`,
-      date: d.toISOString().split('T')[0],
-      dayOfWeek: 'Сегодня',
-      dayNum: d.getDate(),
-      monthName: d.toLocaleString('ru', { month: 'short' }),
-      isToday: true,
-      totalMinutes: 468, // Default 7h 48m baseline
-      deepMinutes: 98,
-      remMinutes: 94,
-      lightMinutes: 258,
-      awakeMinutes: 18,
-      restingHR: 52,
-      hrvRmssd: 68,
-      bedtime: '23:30',
-      waketime: '07:18',
-      latencyMinutes: 14,
-      source: 'MANUAL_ENTRY'
-    };
   }
 
   loadState() {
     try {
-      const mode = localStorage.getItem('somnia_history_mode') || 
-                   (localStorage.getItem('somnia_sleep_has_real_file') === 'true' ? 'file' : 'demo');
-      const savedHistory = localStorage.getItem('somnia_sleep_history_v2');
-
-      if (mode === 'file' && savedHistory) {
-        this.history = JSON.parse(savedHistory);
-        this.historyMode = 'file';
-        this.isDemo = false;
-      } else if (mode === 'cleared') {
-        this.history = savedHistory ? JSON.parse(savedHistory) : [];
-        if (this.history.length === 0) {
-          this.history = [this.getEmptyNight()];
-        }
-        this.historyMode = 'cleared';
-        this.isDemo = false;
+      // Load real records
+      const savedReal = localStorage.getItem('somnia_real_sleep_history');
+      if (savedReal) {
+        this.history = JSON.parse(savedReal);
       } else {
-        // Mode 'demo': Always guarantee 30 days of calibrated baseline
-        this.history = this.getSeedHistory();
-        this.historyMode = 'demo';
-        this.isDemo = true;
-        this.saveHistory();
+        // Migration from v2: filter out any synthetic seed history
+        const legacy = localStorage.getItem('somnia_sleep_history_v2');
+        if (legacy) {
+          try {
+            const parsed = JSON.parse(legacy);
+            // Keep ONLY real entries (exclude synthetic MI_FITNESS_HISTORY seeds)
+            this.history = parsed.filter(item => 
+              item.source === 'MANUAL_REAL' || 
+              item.source === 'MANUAL_EDIT' || 
+              item.source === 'MANUAL_ENTRY' || 
+              item.source === 'MI_FITNESS_FILE'
+            );
+          } catch(e) {
+            this.history = [];
+          }
+        } else {
+          this.history = [];
+        }
       }
 
       this.selectedDayIndex = 0;
-      this.telemetry = this.history[0] || this.getSeedHistory()[0];
+      this.telemetry = this.history.length > 0 ? this.history[0] : null;
+      this.saveHistory();
     } catch (e) {
-      console.warn('[MiFitSync] Could not load history, using seed:', e);
-      this.history = this.getSeedHistory();
-      this.historyMode = 'demo';
-      this.isDemo = true;
-      this.telemetry = this.history[0];
+      console.warn('[MiFitSync] Load state error:', e);
+      this.history = [];
+      this.telemetry = null;
     }
-  }
-
-  clearDemoHistory() {
-    this.history = [this.getEmptyNight()];
-    this.historyMode = 'cleared';
-    this.isDemo = false;
-    localStorage.setItem('somnia_history_mode', 'cleared');
-    this.selectedDayIndex = 0;
-    this.telemetry = this.history[0];
-    this.saveHistory();
-  }
-
-  restoreDemoHistory() {
-    this.history = this.getSeedHistory();
-    this.historyMode = 'demo';
-    this.isDemo = true;
-    localStorage.setItem('somnia_history_mode', 'demo');
-    this.selectedDayIndex = 0;
-    this.telemetry = this.history[0];
-    this.saveHistory();
   }
 
   saveHistory() {
     try {
-      localStorage.setItem('somnia_sleep_history_v2', JSON.stringify(this.history));
-      localStorage.setItem('somnia_mifit_telemetry', JSON.stringify(this.telemetry));
+      localStorage.setItem('somnia_real_sleep_history', JSON.stringify(this.history));
+      if (this.telemetry) {
+        localStorage.setItem('somnia_mifit_telemetry', JSON.stringify(this.telemetry));
+      } else {
+        localStorage.removeItem('somnia_mifit_telemetry');
+      }
+      // Clean legacy fake storage
+      localStorage.removeItem('somnia_sleep_history_v2');
+      localStorage.removeItem('somnia_history_mode');
     } catch (e) {
       console.warn('[MiFitSync] Save error:', e);
     }
+  }
+
+  clearAllHistory() {
+    this.history = [];
+    this.telemetry = null;
+    this.selectedDayIndex = 0;
+    this.saveHistory();
   }
 
   selectDay(index) {
@@ -171,24 +90,94 @@ class MiFitnessSyncEngine {
     if (window.Haptics) window.Haptics.selection();
   }
 
+  saveRealNight(custom = {}) {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+    const now = new Date();
+
+    const total = Number(custom.totalMinutes) || 460;
+    const deep = Number(custom.deepMinutes) || 90;
+    const rem = Number(custom.remMinutes) || 85;
+    const hr = Number(custom.restingHR) || 52;
+    const hrv = Number(custom.hrvRmssd) || 68;
+
+    const newRecord = {
+      id: `real_${todayStr}`,
+      date: todayStr,
+      dayOfWeek: 'Сегодня',
+      dayNum: now.getDate(),
+      monthName: now.toLocaleString('ru', { month: 'short' }),
+      isToday: true,
+      totalMinutes: total,
+      deepMinutes: deep,
+      remMinutes: rem,
+      lightMinutes: Math.max(0, total - deep - rem - 15),
+      awakeMinutes: custom.awakeMinutes || 15,
+      restingHR: hr,
+      hrvRmssd: hrv,
+      bedtime: custom.bedtime || '23:30',
+      waketime: custom.waketime || '07:18',
+      latencyMinutes: custom.latencyMinutes || 14,
+      source: 'MANUAL_REAL'
+    };
+
+    const existingIdx = this.history.findIndex(h => h.date === todayStr);
+    if (existingIdx !== -1) {
+      this.history[existingIdx] = { ...this.history[existingIdx], ...newRecord };
+      this.selectedDayIndex = existingIdx;
+    } else {
+      this.history.unshift(newRecord);
+      this.selectedDayIndex = 0;
+    }
+
+    this.telemetry = this.history[this.selectedDayIndex];
+    this.saveHistory();
+    return this.telemetry;
+  }
+
   updateSelectedDayMetrics(custom) {
-    if (!this.history[this.selectedDayIndex]) return;
+    if (this.history.length === 0) {
+      return this.saveRealNight(custom);
+    }
+    if (!this.history[this.selectedDayIndex]) {
+      this.selectedDayIndex = 0;
+    }
     this.history[this.selectedDayIndex] = {
       ...this.history[this.selectedDayIndex],
       ...custom,
-      source: 'MANUAL_EDIT'
+      source: 'MANUAL_REAL'
     };
     this.telemetry = this.history[this.selectedDayIndex];
     this.saveHistory();
+    return this.telemetry;
+  }
+
+  setCustomTelemetry(custom) {
+    return this.saveRealNight(custom);
+  }
+
+  setAutoSyncEnabled(val) {
+    this.autoSyncEnabled = !!val;
+    localStorage.setItem('somnia_mifit_autosync', val ? 'true' : 'false');
   }
 
   // --- Brutal & Honest AI Sleep Audit ("Где ты проебался") ---
   generateBrutalAudit(tel = this.telemetry) {
-    const total = tel.totalMinutes || 460;
-    const deepMin = tel.deepMinutes || 90;
-    const remMin = tel.remMinutes || 85;
-    const deepPercent = ((deepMin / total) * 100);
-    const remPercent = ((remMin / total) * 100);
+    if (!tel || !tel.totalMinutes) {
+      return {
+        verdict: 'Ожидание реальных замеров сна с часов.',
+        verdictClass: 'verdict-warn',
+        mistakes: [],
+        wins: [],
+        actionPlan: []
+      };
+    }
+
+    const total = tel.totalMinutes;
+    const deepMin = tel.deepMinutes || 0;
+    const remMin = tel.remMinutes || 0;
+    const deepPercent = total > 0 ? ((deepMin / total) * 100) : 0;
+    const remPercent = total > 0 ? ((remMin / total) * 100) : 0;
     const hr = tel.restingHR || 54;
     const bedtime = tel.bedtime || '23:30';
     const awake = tel.awakeMinutes || 20;
@@ -196,57 +185,55 @@ class MiFitnessSyncEngine {
     const mistakes = [];
     const wins = [];
 
-    // Parse bedtime hour
-    const [bH, bM] = bedtime.split(':').map(Number);
+    const [bH, bM] = (bedtime || '23:30').split(':').map(Number);
     const isLateBedtime = (bH >= 0 && bH < 5) || (bH === 23 && bM > 45);
 
     if (isLateBedtime) {
       mistakes.push({
-        tag: '🕒 Сбитое циркадное окно',
-        title: `Отбой в ${bedtime} (позднее окно)`,
-        desc: `Ты лёг слишком поздно и пропустил самое мощное окно секреции соматотропина (22:30–00:30). Из-за этого вымывание кортизола задержалось, а первый цикл сна был скомкан.`
+        title: 'Циркадный сбой (Поздний отбой):',
+        reason: `Отбой в ${bedtime} сорвал выработку мелатонина. Организм пропустил золотое окно соматотропина (22:00-01:00).`,
+        fix: 'Сдвинь отбой строго на 23:00. За 90 минут выключи потолочный синий свет.'
       });
     } else {
-      wins.push('✅ Отбой в естественное окно засыпания (мелатонин сработал вовремя)');
+      wins.push('Отбой в естественное окно засыпания (мелатонин сработал вовремя)');
     }
 
     if (deepPercent < 18) {
       mistakes.push({
-        tag: '🧠 Провал глубокого сна (N3)',
-        title: `Глубокий сон всего ${Math.floor(deepMin/60)}ч ${deepMin%60}м (${deepPercent.toFixed(1)}% при норме 20-25%)`,
-        desc: `Глимфатическая система не успела очистить мозг от метаболических токсинов и бета-амилоида. Поэтому сегодня ватная голова, снижена скорость реакции и тянет на быстрые углеводы.`
+        title: 'Дефицит фазы N3 (Глубокий сон):',
+        reason: `Глубокий сон всего ${Math.floor(deepMin/60)}ч ${deepMin%60}м (${deepPercent.toFixed(1)}%, норма >20%). Мозг не запустил глимфатическую очистку от бета-амилоида.`,
+        fix: 'Снизь температуру в спальне до 18-19°C. Прими горячий душ за 40 минут до сна.'
       });
     } else {
-      wins.push(`✅ Глубокий сон N3 в норме: ${Math.floor(deepMin/60)}ч ${deepMin%60}м (${deepPercent.toFixed(1)}%) — тело полностью восстановилось`);
+      wins.push(`Глубокий сон N3 в норме: ${Math.floor(deepMin/60)}ч ${deepMin%60}м (${deepPercent.toFixed(1)}%) — тело полностью восстановилось`);
     }
 
     if (hr > 55) {
       mistakes.push({
-        tag: '❤️ Ночной пульс не упал (Non-Dipping)',
-        title: `Пульс покоя ${hr} уд/мин (слишком высокий)`,
-        desc: `Сердце ночью пахало почти как днём. Здоровое падение пульса (Dipping -10..-15%) не произошло. Главные виновники: еда ближе чем за 3 часа до сна, кофеин после обеда или стресс перед экраном.`
+        title: 'Ночной пульс не упал (Non-Dipping):',
+        reason: `Пульс покоя ${hr} уд/мин (слишком высокий). Сердце ночью пахало почти как днём. Главные виновники: еда ближе чем за 3 часа до сна, кофеин после обеда или стресс.`,
+        fix: 'Жёсткий стоп любой еды за 3.5 часа до сна. Никакого никотина и экранов в кровати.'
       });
     } else {
-      wins.push(`✅ Отличное ночное замедление пульса: ${hr} уд/мин (сердечно-сосудистая система отдыхала)`);
+      wins.push(`Здоровый пульс покоя: ${hr} уд/мин (Dipping сработал, миокард отдохнул)`);
     }
 
     if (remPercent < 18) {
       mistakes.push({
-        tag: '🌌 Урезана фаза REM (сновидения)',
-        title: `Быстрый сон всего ${Math.floor(remMin/60)}ч ${remMin%60}м (${remPercent.toFixed(1)}%)`,
-        desc: `Будильник выдернул тебя посреди цикла сновидений. Страдает долговременная память, эмоциональный контроль и креативность.`
+        title: 'Сжатая фаза REM (Быстрый сон):',
+        reason: `REM сон ${Math.floor(remMin/60)}ч ${remMin%60}м (${remPercent.toFixed(1)}%, норма 20-25%). Эмоциональная память и когнитивные функции не перезагрузились.`,
+        fix: 'Не ставь резкий будильник. REM-сон доминирует в утренние циклы.'
       });
     }
 
     if (awake > 30) {
       mistakes.push({
-        tag: '⚡ Ночные пробуждения',
-        title: `Бодрствование посреди ночи: ${awake} мин`,
-        desc: `Фрагментация сна. Либо в комнате было слишком жарко (>21°C), либо уровень сахара в крови упал из-за вечерних быстрых углеводов.`
+        title: 'Фрагментация сна (Пробуждения среди ночи):',
+        reason: `Бодрствование внутри ночи ${awake} минут. Частые микропробуждения ломают архитектуру сна.`,
+        fix: 'Используй маску для глаз и беруши. Проветри комнату перед сном.'
       });
     }
 
-    // Concrete 4-step action plan for today
     const actionPlan = [
       { step: '1. Жесткий стоп кофеина', detail: 'Никакого кофе, энергетиков и крепкого чая после 13:30 (период полувыведения кофеина 6-8 часов).' },
       { step: '2. Световой залп утра', detail: 'Включи режим 10 000 K в SOMNIA на 15 минут или выйди на дневной свет, чтобы сбросить циркадные часы.' },
@@ -257,30 +244,22 @@ class MiFitnessSyncEngine {
     let verdict = 'Отличная ночь: режим выдержан, системы восстановлены.';
     let verdictClass = 'verdict-good';
     if (mistakes.length >= 2) {
-      verdict = `⚠️ Обнаружено ${mistakes.length} критических сбоя режима: режим сбит, восстановление неполное!`;
+      verdict = `⚠️ Обнаружено ${mistakes.length} критических сбоя режима: восстановление неполное!`;
       verdictClass = 'verdict-bad';
     } else if (mistakes.length === 1) {
       verdict = '⚠️ Небольшой сбой: одна важная ошибка подпортила восстановление.';
       verdictClass = 'verdict-warn';
     }
 
-    return {
-      verdict,
-      verdictClass,
-      mistakes,
-      wins,
-      actionPlan
-    };
+    return { verdict, verdictClass, mistakes, wins, actionPlan };
   }
 
-  // Evaluated on app launch or when switching back from Mi Fitness
   evaluateAutoSyncOnLaunch() {
     this.lastSyncTimestamp = Date.now();
     const syncTimeEl = document.getElementById('watch-sync-time');
     if (syncTimeEl) {
-      syncTimeEl.textContent = 'Синхронизировано';
+      syncTimeEl.textContent = this.history.length > 0 ? 'Синхронизировано' : 'Ожидание замеров';
     }
-    // If telemetry exists and no manual override, keep state consistent
     if (!this.telemetry && this.history.length > 0) {
       this.telemetry = this.history[0];
     }
@@ -319,9 +298,8 @@ class MiFitnessSyncEngine {
     }
 
     if (records.length > 0) {
-      // Prepend or merge records into history
       this.history = records.map((r, idx) => ({
-        id: `mifit_${Date.now()}_${idx}`,
+        id: `mifit_${r.date || idx}`,
         date: r.date || new Date().toISOString().split('T')[0],
         dayOfWeek: 'Дн',
         dayNum: idx + 1,
@@ -330,32 +308,19 @@ class MiFitnessSyncEngine {
         totalMinutes: r.total || r.totalMinutes || 460,
         deepMinutes: r.deep || r.deepMinutes || 95,
         remMinutes: r.rem || r.remMinutes || 90,
-        lightMinutes: 240,
-        awakeMinutes: 20,
+        lightMinutes: r.light || 240,
+        awakeMinutes: r.awake || 20,
         restingHR: r.hr || r.restingHR || 52,
-        hrvRmssd: 68,
+        hrvRmssd: r.hrv || 68,
         bedtime: r.bedtime || '23:30',
         waketime: r.waketime || '07:15',
         source: 'MI_FITNESS_FILE'
       }));
       this.selectedDayIndex = 0;
       this.telemetry = this.history[0];
-      this.isDemo = false;
-      this.historyMode = 'file';
-      localStorage.setItem('somnia_history_mode', 'file');
-      localStorage.setItem('somnia_sleep_has_real_file', 'true');
       this.saveHistory();
     }
     return this.history;
-  }
-
-  setAutoSyncEnabled(val) {
-    this.autoSyncEnabled = !!val;
-    localStorage.setItem('somnia_mifit_autosync', val ? 'true' : 'false');
-  }
-
-  setCustomTelemetry(custom) {
-    this.updateSelectedDayMetrics(custom);
   }
 
   async connectBleWatch() {

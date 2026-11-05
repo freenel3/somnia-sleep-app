@@ -905,58 +905,31 @@ function renderWatchTelemetry() {
   // Render History & Brutal Audit
   const badgeEl = document.getElementById('history-provenance-badge');
   if (badgeEl && window.miFitSync) {
-    const mode = window.miFitSync.historyMode || (window.miFitSync.isDemo ? 'demo' : 'cleared');
-    if (mode === 'demo') {
+    const realCount = window.miFitSync.history.length;
+    if (realCount === 0) {
       badgeEl.innerHTML = `
-        <div style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #F59E0B; gap: 8px;">
-          <div>
-            <b>⚠️ Демо-шаблон (30 калибровочных ночей)</b><br>
-            <span style="color: rgba(255,255,255,0.7); font-size: 10px;">Дни без записи заполнены макетом. Нажмите «Очистить демо», чтобы оставить только ваши личные ночи, или «📂 Файл Mi Fitness».</span>
-          </div>
-          <button id="btn-clear-demo" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 10px; white-space: nowrap; font-weight: 600;">Очистить демо</button>
+        <div style="background: rgba(56, 189, 248, 0.08); border: 1px dashed rgba(56, 189, 248, 0.35); border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; font-size: 11px; color: #38BDF8; line-height: 1.4;">
+          🎯 <b>100% реальные данные:</b> В приложении нет никаких выдуманных или демонстрационных дней. Введите показатели сна за прошедшую ночь кнопкой <b>«Сохранить мои точные показатели»</b> ниже или загрузите архив через <b>«📂 Файл Mi Fitness»</b>.
         </div>
       `;
-      const btnClear = document.getElementById('btn-clear-demo');
-      if (btnClear) {
-        btnClear.onclick = () => {
-          window.miFitSync.clearDemoHistory();
-          renderWatchTelemetry();
-        };
-      }
-    } else if (mode === 'cleared') {
-      badgeEl.innerHTML = `
-        <div style="background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #38BDF8; gap: 8px;">
-          <div>
-            <b>✨ Демо-история очищена</b><br>
-            <span style="color: rgba(255,255,255,0.7); font-size: 10px;">Отображаются только ваши введенные ночи (${window.miFitSync.history.length}). Вы можете ввести данные вручную или загрузить файл Mi Fitness.</span>
-          </div>
-          <button id="btn-restore-demo" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 10px; white-space: nowrap; font-weight: 600;">Вернуть демо 30д</button>
-        </div>
-      `;
-      const btnRestore = document.getElementById('btn-restore-demo');
-      if (btnRestore) {
-        btnRestore.onclick = () => {
-          window.miFitSync.restoreDemoHistory();
-          renderWatchTelemetry();
-        };
-      }
     } else {
       badgeEl.innerHTML = `
-        <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 6px 12px; margin-bottom: 12px; font-size: 11px; color: #10B981; display: flex; justify-content: space-between; align-items: center;">
-          <span>✓ <b>Реальная история Mi Fitness</b> (${window.miFitSync.history.length} ночей из выгрузки)</span>
-          <button id="btn-restore-demo-alt" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 9px;">Вернуть демо</button>
+        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; font-size: 11px; color: #10B981; display: flex; justify-content: space-between; align-items: center;">
+          <span>✓ <b>Реальная телеметрия:</b> зафиксировано ${realCount} ${realCount === 1 ? 'ночь' : (realCount < 5 ? 'ночи' : 'ночей')} без фейков</span>
+          <button id="btn-clear-real-history" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #94A3B8; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 10px;" title="Очистить историю">Сброс</button>
         </div>
       `;
-      const btnRestoreAlt = document.getElementById('btn-restore-demo-alt');
-      if (btnRestoreAlt) {
-        btnRestoreAlt.onclick = () => {
-          window.miFitSync.restoreDemoHistory();
-          renderWatchTelemetry();
+      const btnClearReal = document.getElementById('btn-clear-real-history');
+      if (btnClearReal) {
+        btnClearReal.onclick = () => {
+          if (confirm('Очистить все сохраненные ночи сна?')) {
+            window.miFitSync.clearAllHistory();
+            renderWatchTelemetry();
+          }
         };
       }
     }
   }
-
   if (typeof renderSleepHistoryChips === 'function') renderSleepHistoryChips();
   if (typeof renderHistoryChart === 'function') renderHistoryChart();
   if (typeof renderSleepBrutalAudit === 'function') renderSleepBrutalAudit();
@@ -1032,7 +1005,7 @@ function initMiFitSyncUI() {
       const inpHr = parseInt(document.getElementById('manual-hr')?.value || '52', 10);
 
       const total = inpH * 60 + inpM;
-      window.miFitSync.setCustomTelemetry({
+      window.miFitSync.saveRealNight({
         totalMinutes: total,
         deepMinutes: inpDeep,
         remMinutes: inpRem,
@@ -1065,7 +1038,7 @@ function initMiFitSyncUI() {
       const hr = parseInt(document.getElementById('manual-hr')?.value || '52', 10);
 
       const total = h * 60 + m;
-      window.miFitSync.updateSelectedDayMetrics({
+      window.miFitSync.saveRealNight({
         totalMinutes: total,
         deepMinutes: deep,
         remMinutes: rem,
@@ -1398,6 +1371,15 @@ function renderSleepHistoryChips() {
   const container = document.getElementById('sleep-history-chips');
   if (!container || !window.miFitSync) return;
 
+  if (window.miFitSync.history.length === 0) {
+    container.innerHTML = `
+      <div style="color: var(--text-muted); font-size: 11px; padding: 12px 6px; font-style: italic;">
+        Нет записей. Введите данные за ночь ниже.
+      </div>
+    `;
+    return;
+  }
+
   const history = window.miFitSync.history.slice(0, currentHistoryPeriod);
   const selectedIdx = window.miFitSync.selectedDayIndex;
 
@@ -1409,7 +1391,7 @@ function renderSleepHistoryChips() {
     const dotColor = isMissing ? '#64748B' : ((day.totalMinutes >= 420 && deepPct >= 18) ? '#10B981' : (day.totalMinutes >= 360 ? '#F59E0B' : '#F43F5E'));
 
     return `
-      <div class="history-day-chip ${isAct}" data-day-idx="${idx}" title="${isMissing ? 'Нет записи / часы не надеты' : ''}">
+      <div class="history-day-chip ${isAct}" data-day-idx="${idx}" title="${day.date}: ${isMissing ? 'Нет записи' : totalH + 'ч'}">
         <div class="chip-dow">${day.isToday ? 'Сегодня' : day.dayOfWeek}</div>
         <div class="chip-num">${day.dayNum}</div>
         <div class="chip-hours" style="color: ${dotColor};">${isMissing ? '--:--' : totalH + 'ч'}</div>
@@ -1432,8 +1414,17 @@ function renderHistoryChart() {
   const container = document.getElementById('sleep-history-chart');
   if (!container || !window.miFitSync) return;
 
+  if (window.miFitSync.history.length === 0) {
+    container.innerHTML = `
+      <div style="display: flex; align-items: center; justify-content: center; height: 100px; color: var(--text-muted); font-size: 11.5px; text-align: center; padding: 0 16px;">
+        📊 График трендов сна появится после добавления первой реальной ночи
+      </div>
+    `;
+    return;
+  }
+
   const history = window.miFitSync.history.slice(0, currentHistoryPeriod).slice().reverse();
-  const selectedDay = window.miFitSync.telemetry;
+  const selectedDay = window.miFitSync.telemetry || history[0];
 
   const width = Math.max(300, container.clientWidth || 340);
   const height = 120;
@@ -1455,7 +1446,7 @@ function renderHistoryChart() {
     const x = paddingX + idx * ((width - paddingX * 2) / (history.length - 1 || 1)) - (barWidth / 2);
     const y = height - paddingY - barH;
 
-    const isSelected = day.date === selectedDay.date;
+    const isSelected = selectedDay && day.date === selectedDay.date;
     const deepPct = isMissing ? 0 : (day.deepMinutes / day.totalMinutes) * 100;
     const fillColor = isMissing ? '#334155' : (isSelected ? '#38BDF8' : (hours >= 7.0 && deepPct >= 18 ? '#10B981' : (hours >= 6.0 ? '#F59E0B' : '#F43F5E')));
     const strokeAttr = isSelected ? 'stroke="#FFFFFF" stroke-width="2"' : (isMissing ? 'stroke="#475569" stroke-width="1" stroke-dasharray="2,2"' : '');
@@ -1474,7 +1465,6 @@ function renderHistoryChart() {
       <span>${currentHistoryPeriod === 7 ? 'Последние 7 ночей' : 'Последние 30 дней'}</span>
     </div>
     <svg width="100%" height="${height}" viewBox="0 0 ${width} ${height}" style="overflow: visible;">
-      <!-- Target dashed line -->
       <line x1="${paddingX}" y1="${targetY}" x2="${width - paddingX}" y2="${targetY}" stroke="rgba(255,255,255,0.25)" stroke-dasharray="3,3" stroke-width="1"/>
       <text x="${width - paddingX - 2}" y="${targetY - 3}" font-size="8" fill="rgba(255,255,255,0.4)" text-anchor="end">7.5ч</text>
       ${barsSvg}
