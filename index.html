@@ -10,11 +10,11 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Somnia">
-  <link rel="stylesheet" href="styles.css?v=2026.19">
-  <link rel="manifest" href="manifest.json?v=2026.19">
+  <link rel="stylesheet" href="styles.css?v=2026.26">
+  <link rel="manifest" href="manifest.json?v=2026.26">
   <script>
     // Somnia 2026 Cache Auto-Purge: forces Android Chrome to flush stale cache on update
-    const SOMNIA_BUILD = '2026.10.1';
+    const SOMNIA_BUILD = '2026.26.2';
     if (localStorage.getItem('somnia_build_v') !== SOMNIA_BUILD) {
       if ('caches' in window) {
         caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))));
@@ -935,20 +935,20 @@
     </div>
   </div>
 
-  <script src="audio-engine.js?v=2026.19"></script>
-  <script src="sleep-engine.js?v=2026.19"></script>
-  <script src="argon-modules.js?v=2026.19"></script>
-  <script src="breathwork.js?v=2026.19"></script>
-  <script src="tracker.js?v=2026.19"></script>
-  <script src="sleepy-course.js?v=2026.19"></script>
-  <script src="mifit-sync.js?v=2026.19"></script>
-  <script src="sleepy-ai.js?v=2026.19"></script>
-  <script src="app.js?v=2026.19"></script>
+  <script src="audio-engine.js?v=2026.26"></script>
+  <script src="sleep-engine.js?v=2026.26"></script>
+  <script src="argon-modules.js?v=2026.26"></script>
+  <script src="breathwork.js?v=2026.26"></script>
+  <script src="tracker.js?v=2026.26"></script>
+  <script src="sleepy-course.js?v=2026.26"></script>
+  <script src="mifit-sync.js?v=2026.26"></script>
+  <script src="sleepy-ai.js?v=2026.26"></script>
+  <script src="app.js?v=2026.26"></script>
   <script>
     // Register Service Worker for 100% Offline PWA Mode
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=2026.26').then((reg) => {
           console.log('[Somnia] ServiceWorker ready for offline PWA:', reg.scope);
         }).catch((err) => {
           console.log('[Somnia] ServiceWorker registration skipped:', err);
@@ -1045,7 +1045,16 @@
       </div>
     </div>
   </div>
-  <!-- Fixed Native Bottom Navigation Bar (Oura / Whoop 2026 Mobile UX) -->
+  
+    <!-- Emergency Hard Cache Flush Button (Fixes Stale PWA Cache on Android) -->
+    <div style="text-align: center; margin: 25px 0 40px; padding: 10px;">
+      <button id="btn-force-flush-cache" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #FCA5A5; padding: 10px 18px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+        <span>🔄</span> <span>Сбросить кэш и принудительно обновить (v2026.26)</span>
+      </button>
+      <div style="font-size: 10px; color: var(--text-muted); margin-top: 5px;">Нажмите, если на телефоне зависла старая версия приложения</div>
+    </div>
+
+    <!-- Fixed Native Bottom Navigation Bar (Oura / Whoop 2026 Mobile UX) -->
   <nav class="bottom-nav-bar" id="mobile-bottom-nav">
     <button class="bottom-nav-item active" data-tab="tab-twin">
       <span class="bottom-nav-icon">🌙</span>

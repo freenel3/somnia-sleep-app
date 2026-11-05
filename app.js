@@ -1561,3 +1561,27 @@ function renderSleepBrutalAudit() {
     </div>
   `;
 }
+
+  // Emergency Cache Flush Handler
+  const btnFlush = document.getElementById('btn-force-flush-cache');
+  if (btnFlush) {
+    btnFlush.addEventListener('click', async () => {
+      btnFlush.textContent = '⏳ Очищаю кэш браузера...';
+      try {
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          for (let r of regs) await r.unregister();
+        }
+        localStorage.removeItem('somnia_build_v');
+        localStorage.removeItem('somnia_sleep_history_v2');
+      } catch(e) {
+        console.warn('Flush error:', e);
+      }
+      // Force reload with unique cachebuster param
+      window.location.replace(window.location.origin + window.location.pathname + '?r=' + Date.now());
+    });
+  }
