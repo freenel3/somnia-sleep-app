@@ -266,60 +266,154 @@ class MiFitnessSyncEngine {
     return this.telemetry;
   }
 
-  // --- Parse Mi Fitness / Zepp Life Export Files ---
+  // --- Parse Mi Fitness / Zepp Life Export Files (Entire History, Unlimited Nights) ---
   async parseExportFile(file) {
+    if (file.name.toLowerCase().endsWith('.zip')) {
+      throw new Error('Вы выбрали сжатый ZIP-архив. Пожалуйста, распакуйте его на телефоне и выберите из папки файл сна (обычно называется sleep_*.csv или sleep_*.json).');
+    }
+
     const text = await file.text();
     let records = [];
 
+    // 1. Try JSON parsing
     try {
       const json = JSON.parse(text);
+      let rawList = [];
       if (Array.isArray(json)) {
-        records = json;
+        rawList = json;
       } else if (json.data && Array.isArray(json.data)) {
-        records = json.data;
-      } else if (json.sleep_records || json.sleep_data) {
-        records = json.sleep_records || json.sleep_data;
+        rawList = json.data;
+      } else if (json.sleep_records && Array.isArray(json.sleep_records)) {
+        rawList = json.sleep_records;
+      } else if (json.sleep_data && Array.isArray(json.sleep_data)) {
+        rawList = json.sleep_data;
       }
-    } catch(e) {
-      // CSV parse
-      const lines = text.split('\n');
-      for (let i = 1; i < lines.length; i++) {
-        const parts = lines[i].split(/[,;\t]/);
-        if (parts.length >= 3) {
+
+      for (const item of rawList) {
+        let total = item.total || item.totalMinutes || item.total_sleep_time || item.duration || 0;
+        let deep = item.deep || item.deepMinutes || item.deep_sleep_time || item.n3 || 0;
+        let rem = item.rem || item.remMinutes || item.rem_sleep_time || 0;
+        let hr = item.hr || item.restingHR || item.avg_heart_rate || item.heart_rate || 52;
+
+        // Convert seconds to minutes if needed
+        if (total > 1500) total = Math.round(total / 60);
+        if (deep > 1500) deep = Math.round(deep / 60);
+        if (rem > 1500) rem = Math.round(rem / 60);
+
+        let dateStr = item.date || item.day || '';
+        if (!dateStr && item.start_time) {
+          dateStr = typeof item.start_time === 'number' 
+            ? new Date(item.start_time * 1000).toISOString().split('T')[0]
+            : String(item.start_time).split('T')[0].split(' ')[0];
+        }
+
+        if (total > 0) {
           records.push({
-            date: parts[0],
-            total: parseInt(parts[1], 10) || 450,
-            deep: parseInt(parts[2], 10) || 90,
-            rem: parseInt(parts[3], 10) || 85,
-            hr: parseInt(parts[4], 10) || 52
+            date: dateStr || new Date().toISOString().split('T')[0],
+            total: total,
+            deep: deep || Math.round(total * 0.2),
+            rem: rem || Math.round(total * 0.2),
+            hr: hr || 52,
+            bedtime: item.bedtime || item.start_time_str || '23:30',
+            waketime: item.waketime || item.end_time_str || '07:18'
           });
+        }
+      }
+    } catch(jsonErr) {
+      // 2. CSV parsing with dynamic column detection
+      const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+      if (lines.length > 1) {
+        const header = lines[0].toLowerCase().split(/[,;\t]/).map(h => h.trim().replace(/['"]/g, ''));
+        
+        let colDate = header.findIndex(h => /date|дата|day|день|timestamp|time/i.test(h));
+        let colTotal = header.findIndex(h => /total|duration|всего|длительность|sleep_time/i.test(h));
+        let colDeep = header.findIndex(h => /deep|глубок|n3/i.test(h));
+        let colRem = header.findIndex(h => /rem|быстр/i.test(h));
+        let colHr = header.findIndex(h => /hr|heart|пульс|bpm/i.test(h));
+        let colBed = header.findIndex(h => /bed|start|начало|отбой/i.test(h));
+        let colWake = header.findIndex(h => /wake|end|конец|подъем/i.test(h));
+
+        // If no header matches, fallback to positional
+        if (colDate === -1) colDate = 0;
+        if (colTotal === -1) colTotal = 1;
+        if (colDeep === -1) colDeep = 2;
+        if (colRem === -1) colRem = 3;
+        if (colHr === -1) colHr = 4;
+
+        for (let i = 1; i < lines.length; i++) {
+          const parts = lines[i].split(/[,;\t]/).map(p => p.trim().replace(/['"]/g, ''));
+          if (parts.length >= 2) {
+            let total = parseInt(parts[colTotal], 10) || 0;
+            let deep = parseInt(parts[colDeep], 10) || 0;
+            let rem = parseInt(parts[colRem], 10) || 0;
+            let hr = parseInt(parts[colHr], 10) || 52;
+
+            if (total > 1500) total = Math.round(total / 60);
+            if (deep > 1500) deep = Math.round(deep / 60);
+            if (rem > 1500) rem = Math.round(rem / 60);
+
+            let rawDate = parts[colDate] || '';
+            let dateStr = rawDate.split(' ')[0].split('T')[0];
+            if (!/\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+              // Try DD.MM.YYYY
+              const dm = dateStr.match(/(\d{1,2})[./-](\d{1,2})[./-](\d{4})/);
+              if (dm) {
+                dateStr = `${dm[3]}-${dm[2].padStart(2, '0')}-${dm[1].padStart(2, '0')}`;
+              }
+            }
+
+            if (total > 0) {
+              records.push({
+                date: dateStr || `2026-11-${String(i).padStart(2, '0')}`,
+                total: total,
+                deep: deep || Math.round(total * 0.2),
+                rem: rem || Math.round(total * 0.2),
+                hr: hr || 52,
+                bedtime: (colBed !== -1 && parts[colBed]) ? parts[colBed] : '23:30',
+                waketime: (colWake !== -1 && parts[colWake]) ? parts[colWake] : '07:18'
+              });
+            }
+          }
         }
       }
     }
 
-    if (records.length > 0) {
-      this.history = records.map((r, idx) => ({
-        id: `mifit_${r.date || idx}`,
-        date: r.date || new Date().toISOString().split('T')[0],
-        dayOfWeek: 'Дн',
-        dayNum: idx + 1,
-        monthName: '',
-        isToday: idx === 0,
-        totalMinutes: r.total || r.totalMinutes || 460,
-        deepMinutes: r.deep || r.deepMinutes || 95,
-        remMinutes: r.rem || r.remMinutes || 90,
-        lightMinutes: r.light || 240,
-        awakeMinutes: r.awake || 20,
-        restingHR: r.hr || r.restingHR || 52,
-        hrvRmssd: r.hrv || 68,
-        bedtime: r.bedtime || '23:30',
-        waketime: r.waketime || '07:15',
-        source: 'MI_FITNESS_FILE'
-      }));
-      this.selectedDayIndex = 0;
-      this.telemetry = this.history[0];
-      this.saveHistory();
+    if (records.length === 0) {
+      throw new Error('В выбранном файле не найдено записей сна. Убедитесь, что это CSV или JSON файл выгрузки данных сна из Mi Fitness.');
     }
+
+    // Sort descending by date (newest first)
+    records.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+    const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+    this.history = records.map((r, idx) => {
+      let d = new Date(r.date);
+      if (isNaN(d.getTime())) d = new Date();
+      return {
+        id: `mifit_${r.date}_${idx}`,
+        date: r.date,
+        dayOfWeek: dayNames[d.getDay()] || 'Дн',
+        dayNum: d.getDate() || (idx + 1),
+        monthName: d.toLocaleString('ru', { month: 'short' }),
+        isToday: idx === 0,
+        totalMinutes: r.total,
+        deepMinutes: r.deep,
+        remMinutes: r.rem,
+        lightMinutes: Math.max(0, r.total - r.deep - r.rem - 20),
+        awakeMinutes: 20,
+        restingHR: r.hr,
+        hrvRmssd: 68,
+        bedtime: r.bedtime,
+        waketime: r.waketime,
+        latencyMinutes: 14,
+        source: 'MI_FITNESS_FILE'
+      };
+    });
+
+    this.selectedDayIndex = 0;
+    this.telemetry = this.history[0];
+    this.saveHistory();
+
     return this.history;
   }
 

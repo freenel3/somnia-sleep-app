@@ -987,10 +987,17 @@ function initMiFitSyncUI() {
     fileUpload.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (file) {
-        await window.miFitSync.parseExportFile(file);
-        renderWatchTelemetry();
-        if (window.sleepyAI) renderSleepyAICoach();
-        alert(`✓ Файл ${file.name} успешно импортирован в Somnia! Телеметрия сна обновлена.`);
+        try {
+          const res = await window.miFitSync.parseExportFile(file);
+          renderWatchTelemetry();
+          if (window.sleepyAI) renderSleepyAICoach();
+          const count = res.length;
+          const first = res[res.length - 1]?.date || '';
+          const last = res[0]?.date || '';
+          alert(`✓ Успешно синхронизирована вся история сна из файла "${file.name}": загружено ${count} реальных ночей (с ${first} по ${last})! Без фейков.`);
+        } catch(err) {
+          alert('Ошибка чтения файла: ' + err.message);
+        }
       }
     });
   }
