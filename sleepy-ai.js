@@ -117,6 +117,15 @@ class SleepyAIEngine {
   getGapAnalysis(telemetry, sqi) {
     const gaps = [];
 
+    if (!telemetry || !telemetry.totalMinutes) {
+      return [{
+        title: 'Ожидание первой записи сна',
+        loss: '0%',
+        cause: 'История сна пока не содержит замеров. Сохраните ночь вручную или загрузите файл Mi Fitness.',
+        remedy: 'Нажмите вкладку «Часы» и сохраните показатели за прошедшую ночь.'
+      }];
+    }
+
     const total = telemetry.totalMinutes || 460;
     const deepPercent = ((telemetry.deepMinutes || 90) / total) * 100;
     const remPercent = ((telemetry.remMinutes || 85) / total) * 100;
@@ -209,7 +218,7 @@ class SleepyAIEngine {
    * Build System Prompt for Live LLM, injecting deep telemetry from Redmi Watch & Mi Fitness
    */
   buildSystemPrompt() {
-    const tel = window.miFitSync ? window.miFitSync.telemetry : {};
+    const tel = (window.miFitSync && window.miFitSync.telemetry) ? window.miFitSync.telemetry : {};
     const sqi = this.calculateSQI(tel);
     const totalH = Math.floor((tel.totalMinutes || 468) / 60);
     const totalM = (tel.totalMinutes || 468) % 60;
@@ -423,7 +432,7 @@ ${historySummary}
    */
   respondToPrompt(prompt) {
     const lower = prompt.toLowerCase();
-    const tel = window.miFitSync ? window.miFitSync.telemetry : {};
+    const tel = (window.miFitSync && window.miFitSync.telemetry) ? window.miFitSync.telemetry : {};
     const sqi = this.calculateSQI(tel);
 
     if (lower.includes('ошиб') || lower.includes('проеб') || lower.includes('разбор') || lower.includes('почему') || lower.includes('плохо') || lower.includes('разбит') || lower.includes('сон')) {

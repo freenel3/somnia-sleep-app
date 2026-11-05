@@ -882,24 +882,33 @@ function renderWatchTelemetry() {
   const inpRem = document.getElementById('manual-rem-mins');
   const inpHr = document.getElementById('manual-hr');
 
-  if (inpH && document.activeElement !== inpH) inpH.value = Math.floor((tel.totalMinutes || 468) / 60);
-  if (inpM && document.activeElement !== inpM) inpM.value = (tel.totalMinutes || 468) % 60;
-  if (inpDeep && document.activeElement !== inpDeep) inpDeep.value = tel.deepMinutes || 98;
-  if (inpRem && document.activeElement !== inpRem) inpRem.value = tel.remMinutes || 94;
-  if (inpHr && document.activeElement !== inpHr) inpHr.value = tel.restingHR || 52;
+  if (tel) {
+    if (inpH && document.activeElement !== inpH) inpH.value = Math.floor((tel.totalMinutes || 468) / 60);
+    if (inpM && document.activeElement !== inpM) inpM.value = (tel.totalMinutes || 468) % 60;
+    if (inpDeep && document.activeElement !== inpDeep) inpDeep.value = tel.deepMinutes || 98;
+    if (inpRem && document.activeElement !== inpRem) inpRem.value = tel.remMinutes || 94;
+    if (inpHr && document.activeElement !== inpHr) inpHr.value = tel.restingHR || 52;
+  } else {
+    if (inpH && document.activeElement !== inpH && !inpH.value) inpH.value = 7;
+    if (inpM && document.activeElement !== inpM && !inpM.value) inpM.value = 45;
+    if (inpDeep && document.activeElement !== inpDeep && !inpDeep.value) inpDeep.value = 95;
+    if (inpRem && document.activeElement !== inpRem) inpRem.value = 90;
+    if (inpHr && document.activeElement !== inpHr) inpHr.value = 54;
+  }
 
   const formatHoursMin = (min) => {
+    if (!min) return '--:--';
     const h = Math.floor(min / 60);
     const m = min % 60;
     return `${h}ч ${m}м`;
   };
 
-  if (deepEl) deepEl.textContent = formatHoursMin(tel.deepMinutes);
-  if (remEl) remEl.textContent = formatHoursMin(tel.remMinutes);
-  if (hrEl) hrEl.textContent = `${tel.restingHR} уд/мин`;
-  if (hrvEl) hrvEl.textContent = `${tel.hrvRmssd} мс`;
-  if (latencyEl) latencyEl.textContent = `${tel.latencyMinutes} мин`;
-  if (totalEl) totalEl.textContent = formatHoursMin(tel.totalMinutes);
+  if (deepEl) deepEl.textContent = tel ? formatHoursMin(tel.deepMinutes) : '--:--';
+  if (remEl) remEl.textContent = tel ? formatHoursMin(tel.remMinutes) : '--:--';
+  if (hrEl) hrEl.textContent = (tel && tel.restingHR) ? `${tel.restingHR} уд/мин` : '-- уд/мин';
+  if (hrvEl) hrvEl.textContent = (tel && tel.hrvRmssd) ? `${tel.hrvRmssd} мс` : '-- мс';
+  if (latencyEl) latencyEl.textContent = (tel && tel.latencyMinutes) ? `${tel.latencyMinutes} мин` : '-- мин';
+  if (totalEl) totalEl.textContent = tel ? formatHoursMin(tel.totalMinutes) : '--:--';
   if (deviceEl) deviceEl.textContent = window.miFitSync.deviceName || 'Redmi Watch 5 Active';
 
   // Render History & Brutal Audit
@@ -1095,7 +1104,7 @@ function initMiFitSyncUI() {
 // =====================================================================
 function renderSleepyAICoach() {
   if (!window.sleepyAI) return;
-  const tel = window.miFitSync ? window.miFitSync.telemetry : {};
+  const tel = (window.miFitSync && window.miFitSync.telemetry) ? window.miFitSync.telemetry : {};
   const currentDay = window.sleepyCourse ? window.sleepyCourse.currentDay : 1;
 
   const sqi = window.sleepyAI.calculateSQI(tel);
@@ -1495,6 +1504,14 @@ function renderSleepBrutalAudit() {
   if (!container || !window.miFitSync) return;
 
   const tel = window.miFitSync.telemetry;
+  if (!tel || !tel.totalMinutes) {
+    container.innerHTML = `
+      <div style="background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.15); border-radius: 12px; padding: 20px; text-align: center; color: var(--text-muted); font-size: 13px;">
+        💤 Ожидание реальной ночи сна для разбора. Сохраните показатели за прошедшую ночь ниже.
+      </div>
+    `;
+    return;
+  }
   const audit = window.miFitSync.generateBrutalAudit(tel);
   const sqi = window.sleepyAI ? window.sleepyAI.calculateSQI(tel) : 78;
 
