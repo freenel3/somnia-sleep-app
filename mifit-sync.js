@@ -92,8 +92,10 @@ class MiFitnessSyncEngine {
 
   saveRealNight(custom = {}) {
     const todayStr = new Date().toISOString().split('T')[0];
+    const targetDate = custom.date || todayStr;
+    const d = new Date(targetDate);
     const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
-    const now = new Date();
+    const isToday = targetDate === todayStr;
 
     const total = Number(custom.totalMinutes) || 460;
     const deep = Number(custom.deepMinutes) || 90;
@@ -102,12 +104,12 @@ class MiFitnessSyncEngine {
     const hrv = Number(custom.hrvRmssd) || 68;
 
     const newRecord = {
-      id: `real_${todayStr}`,
-      date: todayStr,
-      dayOfWeek: 'Сегодня',
-      dayNum: now.getDate(),
-      monthName: now.toLocaleString('ru', { month: 'short' }),
-      isToday: true,
+      id: `real_${targetDate}`,
+      date: targetDate,
+      dayOfWeek: isToday ? 'Сегодня' : (dayNames[d.getDay()] || 'Дн'),
+      dayNum: isNaN(d.getDate()) ? 1 : d.getDate(),
+      monthName: isNaN(d.getTime()) ? '' : d.toLocaleString('ru', { month: 'short' }),
+      isToday: isToday,
       totalMinutes: total,
       deepMinutes: deep,
       remMinutes: rem,
@@ -121,14 +123,18 @@ class MiFitnessSyncEngine {
       source: 'MANUAL_REAL'
     };
 
-    const existingIdx = this.history.findIndex(h => h.date === todayStr);
+    const existingIdx = this.history.findIndex(h => h.date === targetDate);
     if (existingIdx !== -1) {
       this.history[existingIdx] = { ...this.history[existingIdx], ...newRecord };
-      this.selectedDayIndex = existingIdx;
     } else {
-      this.history.unshift(newRecord);
-      this.selectedDayIndex = 0;
+      this.history.push(newRecord);
     }
+
+    // Sort descending by date (newest first)
+    this.history.sort((a, b) => b.date.localeCompare(a.date));
+
+    const activeIdx = this.history.findIndex(h => h.date === targetDate);
+    this.selectedDayIndex = activeIdx !== -1 ? activeIdx : 0;
 
     this.telemetry = this.history[this.selectedDayIndex];
     this.saveHistory();

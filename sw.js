@@ -3,7 +3,7 @@
  * Ensures user ALWAYS sees latest live updates immediately, with offline cache fallback.
  */
 
-const CACHE_NAME = 'somnia-pwa-v24-full-history-sync-2026';
+const CACHE_NAME = 'somnia-pwa-v25-multiday-test-2026';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

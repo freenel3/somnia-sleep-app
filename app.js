@@ -930,6 +930,10 @@ function renderWatchTelemetry() {
       }
     }
   }
+    const inpDateEl = document.getElementById('manual-date');
+  if (inpDateEl && !inpDateEl.value) {
+    inpDateEl.value = new Date().toISOString().split('T')[0];
+  }
   if (typeof renderSleepHistoryChips === 'function') renderSleepHistoryChips();
   if (typeof renderHistoryChart === 'function') renderHistoryChart();
   if (typeof renderSleepBrutalAudit === 'function') renderSleepBrutalAudit();
@@ -1005,6 +1009,7 @@ function initMiFitSyncUI() {
   if (btnQuickDemo && window.miFitSync) {
     btnQuickDemo.addEventListener('click', () => {
       // Read current values directly from manual inputs if available
+      const dateVal = document.getElementById('manual-date')?.value || new Date().toISOString().split('T')[0];
       const inpH = parseInt(document.getElementById('manual-total-hours')?.value || '7', 10);
       const inpM = parseInt(document.getElementById('manual-total-mins')?.value || '48', 10);
       const inpDeep = parseInt(document.getElementById('manual-deep-mins')?.value || '98', 10);
@@ -1013,6 +1018,7 @@ function initMiFitSyncUI() {
 
       const total = inpH * 60 + inpM;
       window.miFitSync.saveRealNight({
+        date: dateVal,
         totalMinutes: total,
         deepMinutes: inpDeep,
         remMinutes: inpRem,
@@ -1038,6 +1044,7 @@ function initMiFitSyncUI() {
   const btnSaveManual = document.getElementById('btn-save-manual-metrics');
   if (btnSaveManual && window.miFitSync) {
     btnSaveManual.addEventListener('click', () => {
+      const dateVal = document.getElementById('manual-date')?.value || new Date().toISOString().split('T')[0];
       const h = parseInt(document.getElementById('manual-total-hours')?.value || '7', 10);
       const m = parseInt(document.getElementById('manual-total-mins')?.value || '42', 10);
       const deep = parseInt(document.getElementById('manual-deep-mins')?.value || '98', 10);
@@ -1046,6 +1053,7 @@ function initMiFitSyncUI() {
 
       const total = h * 60 + m;
       window.miFitSync.saveRealNight({
+        date: dateVal,
         totalMinutes: total,
         deepMinutes: deep,
         remMinutes: rem,
